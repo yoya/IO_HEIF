@@ -84,6 +84,15 @@ class IO_HEIF {
             $box["minor"] = unpack("N", $types[1])[1];
             $box["alt"] = array_slice($types, 2);
             break;
+        case "ispe":
+            $values = str_split($data, 4);
+            $box["XXX"] = unpack("N", $values[0])[1];
+            $box["width"]  = unpack("N", $values[1])[1];
+            $box["height"] = unpack("N", $values[2])[1];
+            break;
+            /*
+             * container type
+             */
         case "meta":
         case "iprp": // item properties
         case "ipco": // item property container
@@ -91,6 +100,7 @@ class IO_HEIF {
             if ($something) { // XXX
                 $containerData = $data;
             } else {
+                $box["XXX"] = $something;
                 $containerData = substr($data, 4); // meta ?
             }
             $box["boxList"] = $this->parseBoxList($containerData);
@@ -136,12 +146,12 @@ class IO_HEIF {
             }
             foreach ($box2 as $key => $data) {
                 if (is_array($data)) {
-                    echo "  $key:\n";
+                    echo $indentSpace."  $key:\n";
                     foreach ($data as $k => $v) {
-                        echo "    $k:$v\n";
+                        echo $indentSpace."    $k:$v\n";
                     }
                 } else {
-                    echo "  $key:$data\n";
+                    echo $indentSpace."  $key:$data\n";
                 }
             }
             break;
