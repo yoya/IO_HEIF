@@ -95,11 +95,36 @@ class IO_HEIF {
             $box["conponentFlagsMask"] = unpack("N", substr($data, 20, 4))[1];
             $box["conponentName"] = substr($data, 24);
             break;
-        case "mvhd__":
+        case "mvhd":
             $box["version"] = ord($data[0]);
             $box["flag"] = unpack("N", "\0".substr($data, 1, 3))[1];
             $box["creationTime"] = unpack("N", substr($data, 4, 4))[1];
-            // ...
+            $box["modificationTime"] = unpack("N", substr($data, 8, 4))[1];
+            $box["timeScale"] = unpack("N", substr($data, 12, 4))[1];
+            $box["duration"] = unpack("N", substr($data, 16, 4))[1];
+            $box["preferredRate"] = unpack("N", substr($data, 20, 4))[1];
+            $box["preferredVolume"] = unpack("N", substr($data, 24, 2))[1];
+            $box["reserved"] =substr($data, 26, 10);
+            $box["MatrixStructure"] = unpack("N*", substr($data, 36, 36));
+            $box["previewTime"] = unpack("N", substr($data, 72, 4))[1];
+            $box["peviewDuration"] = unpack("N", substr($data, 76, 4))[1];
+            $box["posterTime"] = unpack("N", substr($data, 80, 4))[1];
+            $box["selectionTime"] = unpack("N", substr($data, 84, 4))[1];
+            $box["selectionDuration"] = unpack("N", substr($data, 88, 4))[1];
+            $box["currentTime"] = unpack("N", substr($data, 92, 4))[1];
+            $box["nextTrackID"] = unpack("N", substr($data, 96, 4))[1];
+            break;
+        case "tkhd":
+            $box["version"] = ord($data[0]);
+            $box["flag"] = unpack("N", "\0".substr($data, 1, 3))[1];
+            $box["creationTime"] = unpack("N", substr($data, 4, 4))[1];
+            $box["modificationTime"] = unpack("N", substr($data, 8, 4))[1];
+            $box["trackId"] = unpack("N", substr($data, 12, 4))[1];
+            $box["reserved"] =substr($data, 16, 4);
+            $box["duration"] = unpack("N", substr($data, 20, 4))[1];
+            $box["reserved"] =substr($data, 24, 8);
+            $box["layer"] = unpack("N", substr($data, 32, 2))[1];
+            $box["alternat4eGroup"] = unpack("N", substr($data, 34, 2))[1];
             break;
         case "ispe":
             $box["version"] = ord($data[0]);
