@@ -136,6 +136,80 @@ class IO_HEIF {
             $box["hspace"]  = unpack("N", substr($data, 0, 4))[1];
             $box["vspace"] = unpack("N", substr($data, 4, 4))[1];
             break;
+        case "hvcC":
+            // https://gist.github.com/yohhoy/2abc28b611797e7b407ae98faa7430e7
+            $hb = new IO_Bit();
+            $hb->input($data);
+            $box["version"]  = $hb->getUI8();
+            $box["profileSpace"]  = $hb->getUIBits(2);
+            $box["tierFlag"]  = $hb->getUIBit();
+            $box["profileIdc"]  = $hb->getUIBits(5);
+            $box["profileCompatibilityFlags"]  = $hb->getUI32BE();
+            $box["constraintIndicatorFlags"]  = $hb->getUIBits(48);
+            $box["levelIdc"]  = $hb->getUI8();
+            $reserved = $hb->getUIBits(4);
+            if ($reserved !== 0xF) {
+                var_dump($box);
+                throw new Exception("reserved({$reserved}) !== 0xF");
+            }
+            $box["minSpatialSegmentationIdc"]  = $hb->getUIBits(12);
+            $reserved = $hb->getUIBits(6);
+            if ($reserved !== 0x3F) {
+                var_dump($box);
+                throw new Exception("reserved({$reserved}) !== 0x3F");
+            }
+            $box["parallelismType"]  = $hb->getUIBits(2);
+            $reserved = $hb->getUIBits(6);
+            if ($reserved !== 0x3F) {
+                var_dump($box);
+                throw new Exception("reserved({$reserved}) !== 0x3F");
+            }
+            $box["chromaFormat"]  = $hb->getUIBits(2);
+            $reserved = $hb->getUIBits(5);
+            if ($reserved !== 0x1F) {
+                var_dump($box);
+                throw new Exception("reserved({$reserved}) !== 0x1F");
+            }
+            $box["bitDepthLumaMinus8"]  = $hb->getUIBits(3);
+            $reserved = $hb->getUIBits(5);
+            if ($reserved !== 0x1F) {
+                var_dump($box);
+                throw new Exception("reserved({$reserved}) !== 0x1F");
+            }
+            $box["bitDepthChromaMinus8"]  = $hb->getUIBits(3);
+            $box["avgFrameRate"]  = $hb->getUIBits(16);
+            $box["constantFrameRate"]  = $hb->getUIBits(2);
+            $box["numTemporalLayers"]  = $hb->getUIBits(3);
+            $box["temporalIdNested"]  = $hb->getUIBit();
+            $box["lengthSizeMinusOne"]  = $hb->getUIBits(2);
+            
+            $box["numOfArrays"] = $numOfArrays = $hb->getUI8();
+            $nalArrays = [];
+            for ($i = 0 ; $i < $numOfArrays ; $i++) {
+                $nal = [];
+                $nal["array_completeness"] = $hb->getUIBit();
+                $reserved = $hb->getUIBit();
+                if ($reserved !== 0) {
+                    var_dump($box);
+                    var_dump($nalArrays);
+                    throw new Exception("reserved({$reserved}) !== 0");
+                }
+                $nal["NALUnitType"] = $hb->getUIBits(6);
+                $nal["numNalus"] = $numNalus = $hb->getUI16BE();
+                $nalus = [];
+                for ($j = 0 ; $j < $numNalus ; $j++) {
+                    $nalu = [];
+                    $nalu["nalUnitLength"] = $nalUnitLength = $hb->getUI16BE();
+                    $nalu["nalUnit"] = $hb->getData($nalUnitLength);
+                    $nalus []= $nalu;
+                }
+                $nal["nalus"] = $nalus;
+                $nalArrays []= $nal;
+            }
+            $box["nalArrays"] = $nalArrays;
+            // $box[""]  = $hb->getUIBits();
+            // $box[""]  = $hb->getUI();
+            break;
             /*
              * container type
              */
@@ -195,6 +269,21 @@ class IO_HEIF {
         case "pasp":
             echo $indentSpace."  hspace:".$box["hspace"]." vspace:".$box["vspace"].PHP_EOL;
             break;
+        case "hvcC":
+            $this->printfBox($box, $indentSpace."  version:%d profileSpace:%d tierFlag:%x profileIdc:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  profileCompatibilityFlags:0x%x".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  constraintIndicatorFlags:0x%x levelIdc:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  minSpatialSegmentationIdc:%d parallelismType:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  chromaFormat:%d bitDepthLumaMinus8:%d bitDepthChromaMinus8:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  avgFrameRate:%d constantFrameRate:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  numTemporalLayers:%d temporalIdNested:%d lengthSizeMinusOne:%d".PHP_EOL);
+            foreach ($box["nalArrays"] as $nal) {
+                $this->printfBox($nal, $indentSpace."    array_completeness:%d NALUnitType:%d".PHP_EOL);
+                foreach ($nal["nalus"] as $nalu) {
+                    $this->printfBox($nalu, $indentSpace."      nalUnitLength:%d nalUnit:%h".PHP_EOL);
+                }
+            }
+            break;
         default:
             $box2 = [];;
             foreach ($box as $key => $data) {
@@ -217,6 +306,24 @@ class IO_HEIF {
         if (isset($box["boxList"])) {
             $opts["indent"] += 1;
             $this->dumpBoxList($box["boxList"], $opts);
+        }
+    }
+    function printfBox($box, $format) {
+        preg_match_all('/(\S+:[^%]*%\S+|\s+)/', $format, $matches);
+        foreach ($matches[1] as $match) {
+            if (preg_match('/(\S+):([^%]*)(%\S+)/', $match , $m)) {
+                $f = $m[3];
+                if ($f === "%h") {
+                    printf($m[1].":".$m[2]);
+                    foreach (str_split($box[$m[1]]) as $c) {
+                        printf(" %02x", ord($c));
+                    }
+                } else {
+                    printf($m[1].":".$m[2].$f, $box[$m[1]]);
+                }
+            } else {
+                echo $match;
+            }
         }
     }
     function build($opts = array()) {
