@@ -93,6 +93,7 @@ class IO_HEIF {
             /*
              * container type
              */
+        case "moov":
         case "meta":
         case "iprp": // item properties
         case "ipco": // item property container
