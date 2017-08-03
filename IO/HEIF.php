@@ -17,7 +17,7 @@ function getTypeDescription($type) {
         "mdat" => "Media Data",
         "moov" => "MovieBox",
         //
-        "hdlr" => "Handler",
+        "hdlr" => "Handler reference",
         "pitm" => "Prinary item referene",
         "iloc" => "Item location",
         "iinf" => "Item information",
@@ -30,6 +30,7 @@ function getTypeDescription($type) {
         //
         "iprp" => "Item Properties",
         "ipco" => "Item Property Container",
+        "pasp" => "Pixel Aspect Ratio",
         "hvcC" => "HEVC Decoder Conf",
         "ispe" => "Image Spatial Extents", // width, height
         "colr" => "Colour Information", // ICC profile
@@ -84,30 +85,50 @@ class IO_HEIF {
             $box["minor"] = unpack("N", $types[1])[1];
             $box["alt"] = array_slice($types, 2);
             break;
+        case "hdlr":
+            $box["version"] = ord($data[0]);
+            $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
+            $box["conponentType"] = substr($data, 4, 4);
+            $box["conponentSubType"] = substr($data, 8, 4);
+            $box["conponentManufacturer"] = substr($data, 12, 4);
+            $box["conponentFlags"] = unpack("N", substr($data, 16, 4))[1];
+            $box["conponentFlagsMask"] = unpack("N", substr($data, 20, 4))[1];
+            $box["conponentName"] = substr($data, 24);
+            break;
+        case "mvhd__":
+            $box["version"] = ord($data[0]);
+            $box["flag"] = unpack("N", "\0".substr($data, 1, 3))[1];
+            $box["creationTime"] = unpack("N", substr($data, 4, 4))[1];
+            // ...
+            break;
         case "ispe":
-            $values = str_split($data, 4);
-            $box["XXX"] = unpack("N", $values[0])[1];
-            $box["width"]  = unpack("N", $values[1])[1];
-            $box["height"] = unpack("N", $values[2])[1];
+            $box["version"] = ord($data[0]);
+            $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
+            $box["width"]  = unpack("N", substr($data, 4, 4))[1];
+            $box["height"] = unpack("N", substr($data, 8, 4))[1];
+            break;
+        case "pasp":
+            $box["hspace"]  = unpack("N", substr($data, 0, 4))[1];
+            $box["vspace"] = unpack("N", substr($data, 4, 4))[1];
             break;
             /*
              * container type
              */
-        case "moov":
-        case "meta":
+        case "moov": // Movie Atoms
+        case "trak":
+        case "mdia":
+        case "meta": // Metadata
         case "iprp": // item properties
         case "ipco": // item property container
-            $something = unpack("N", substr($data, 0, 4))[1]; // XXX
-            if ($something) { // XXX
-                $containerData = $data;
+            if ($type === "meta") {
+                $box["version"] = ord($data[0]);
+                $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
+                $containerData = substr($data, 4);
             } else {
-                $box["XXX"] = $something;
-                $containerData = substr($data, 4); // meta ?
+                $containerData = $data;
             }
             $box["boxList"] = $this->parseBoxList($containerData);
             break;
-        case "hdlr":
-            
         default:
         }
         return $box;
@@ -137,6 +158,17 @@ class IO_HEIF {
         echo "\n";
         switch ($type) {
         case "meta":
+            break;
+        case "ftyp":
+            echo $indentSpace."  major:".$box["major"]." minor:".$box["minor"];
+            echo "  alt:".join(", ", $box["alt"]).PHP_EOL;
+            break;
+        case "ispe":
+            echo $indentSpace."  version:".$box["version"]." flags:".$box["flags"];
+            echo "  width:".$box["width"]." height:".$box["height"].PHP_EOL;
+            break;
+        case "pasp":
+            echo $indentSpace."  hspace:".$box["hspace"]." vspace:".$box["vspace"].PHP_EOL;
             break;
         default:
             $box2 = [];;
