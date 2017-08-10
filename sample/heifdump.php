@@ -16,10 +16,10 @@ $heif = new IO_HEIF();
 $heif->parse($heifdata);
 
 $opts = array();
-if (isset($opts['h'])) {
+if (isset($options['h'])) {
     $opts['hexdump'] = true;
 }
-if (isset($opts['v'])) {
+if (isset($options['v'])) {
     $opts['verbose'] = true;
 }
 $heif->dump($opts);

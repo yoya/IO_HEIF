@@ -50,14 +50,15 @@ class IO_HEIF {
         $bit = new IO_Bit();
         $bit->input($heifdata);
         $this->_heifdata = $heifdata;
-        $this->boxTree = $this->parseBoxList($heifdata);
+        $this->boxTree = $this->parseBoxList($heifdata, 0);
     }
-    function parseBoxList($data) {
+    function parseBoxList($data, $baseOffset) {
         // echo "parseBoxList(".strlen($data).")\n";
         $bit = new IO_Bit();
         $bit->input($data);
         $boxList = [];
         while ($bit->hasNextData(8)) {
+            list($offset, $dummy) = $bit->getOffset();
             $len = $bit->getUI32BE();
             if ($len === 0) {
                 echo "len == 0\n";
@@ -70,12 +71,16 @@ class IO_HEIF {
             $type = $bit->getData(4);
             // echo "$type($len): " . substr($data, 0, 4) . "\n";
             $data = $bit->getData($len - 8);
-            $boxList []= $this->parseBox($type, $data);
+            $box = $this->parseBox($type, $data, $baseOffset + $offset + 8);
+            $box["_offset"] = $baseOffset + $offset;
+            list($offsetNext, $dummy) = $bit->getOffset();
+            $box["_length"] = $offsetNext - $offset;
+            $boxList []= $box;
         }
         return $boxList;
     }
     
-    function parseBox($type, $data) {
+    function parseBox($type, $data, $baseOffset) {
         // echo "parseBox: $type(". strlen($data) . "):". substr($data, 0, 4) . "\n";
         $box = ["type" => $type, "(len)" => strlen($data)];
         switch($type) {
@@ -223,10 +228,11 @@ class IO_HEIF {
                 $box["version"] = ord($data[0]);
                 $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
                 $containerData = substr($data, 4);
+                $box["boxList"] = $this->parseBoxList($containerData, $baseOffset + 4);
             } else {
                 $containerData = $data;
+                $box["boxList"] = $this->parseBoxList($containerData, $baseOffset);
             }
-            $box["boxList"] = $this->parseBoxList($containerData);
             break;
         default:
         }
@@ -287,7 +293,7 @@ class IO_HEIF {
         default:
             $box2 = [];;
             foreach ($box as $key => $data) {
-                if (in_array($key, ["type", "(len)", "boxList"]) === false) {
+                if (in_array($key, ["type", "(len)", "boxList", "_offset", "_length"]) === false) {
                     $box2[$key] = $data;
                 }
             }
@@ -304,8 +310,21 @@ class IO_HEIF {
             break;
         }
         if (isset($box["boxList"])) {
+            if (! empty($opts['hexdump'])) {
+                $bit = new IO_Bit();
+                $bit->input($this->_heifdata);
+                $offset = $box["_offset"];
+                $length = $box["boxList"][0]["_offset"] - $offset;
+                $bit->hexdump($offset, $length);
+            }
             $opts["indent"] += 1;
             $this->dumpBoxList($box["boxList"], $opts);
+        } else {
+            if (! empty($opts['hexdump'])) {
+                $bit = new IO_Bit();
+                $bit->input($this->_heifdata);
+                $bit->hexdump($box["_offset"], $box["_length"]);
+            }
         }
     }
     function printfBox($box, $format) {
