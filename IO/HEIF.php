@@ -215,6 +215,18 @@ class IO_HEIF {
             // $box[""]  = $hb->getUIBits();
             // $box[""]  = $hb->getUI();
             break;
+        case "iinf":
+            $box["version"] = ord($data[0]);  // XXX really?
+            $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
+            if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
+                $box["count"] = unpack("n", substr($data, 4, 2))[1];
+                $containerData = substr($data, 6);
+            } else {
+                $box["count"] = unpack("N", substr($data, 4, 4))[1];
+                $containerData = substr($data, 8);
+            }
+            $box["boxList"] = $this->parseBoxList($containerData, $baseOffset + 4);
+            break;
             /*
              * container type
              */
