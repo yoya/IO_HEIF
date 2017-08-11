@@ -216,7 +216,7 @@ class IO_HEIF {
             // $box[""]  = $hb->getUI();
             break;
         case "iinf":
-            $box["version"] = ord($data[0]);  // XXX really?
+            $box["version"] = ord($data[0]);
             $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
             if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
                 $box["count"] = unpack("n", substr($data, 4, 2))[1];
