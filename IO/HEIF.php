@@ -50,39 +50,32 @@ class IO_HEIF {
         $bit = new IO_Bit();
         $bit->input($heifdata);
         $this->_heifdata = $heifdata;
-        $this->boxTree = $this->parseBoxList($heifdata, 0);
+        $this->boxTree = $this->parseBoxList($bit, strlen($heifdata));
     }
-    function parseBoxList($data, $baseOffset) {
+    function parseBoxList($bit, $length) {
         // echo "parseBoxList(".strlen($data).")\n";
-        $bit = new IO_Bit();
-        $bit->input($data);
         $boxList = [];
-        while ($bit->hasNextData(8)) {
-            list($offset, $dummy) = $bit->getOffset();
-            $len = $bit->getUI32BE();
-            if ($len === 0) {
-                echo "len == 0\n";
-                continue;
-            }
-            if ($len < 8) {
-                echo "len($len) < 8\n";
-                break;
-            }
-            $type = $bit->getData(4);
-            // echo "$type($len): " . substr($data, 0, 4) . "\n";
-            $data = $bit->getData($len - 8);
-            $box = $this->parseBox($type, $data, $baseOffset + $offset + 8);
-            $box["_offset"] = $baseOffset + $offset;
-            list($offsetNext, $dummy) = $bit->getOffset();
-            $box["_length"] = $offsetNext - $offset;
+        list($baseOffset, $dummy) = $bit->getOffset();
+        while ($bit->hasNextData(8) && ($bit->getOffset()[0] < ($baseOffset + $length))) {
+            $box = $this->parseBox($bit);
             $boxList []= $box;
         }
         return $boxList;
     }
     
-    function parseBox($type, $data, $baseOffset) {
-        // echo "parseBox: $type(". strlen($data) . "):". substr($data, 0, 4) . "\n";
-        $box = ["type" => $type, "(len)" => strlen($data)];
+    function parseBox($bit) {
+        list($baseOffset, $dummy) = $bit->getOffset();
+        $len = $bit->getUI32BE();
+        if ($len < 8) {
+            throw new Exception("parseBox: len($len) < 8");
+        }
+        $type = $bit->getData(4);
+        $box = ["type" => $type, "_offset" => $baseOffset, "_length" => $len];
+        if ($bit->hasNextData($len - 8) === false) {
+            throw new Exception("parseBox: hasNext(len:$len - 8) === false");
+        }
+        $data = $bit->getData($len - 8);
+        list($nextOffset, $dummy) = $bit->getOffset();
         switch($type) {
         case "ftyp":
             $types = str_split($data, 4);
@@ -220,12 +213,14 @@ class IO_HEIF {
             $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
             if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
                 $box["count"] = unpack("n", substr($data, 4, 2))[1];
-                $containerData = substr($data, 6);
+                // $containerData = substr($data, 6);
+                $bit->setOffset($baseOffset + 8 + 6, 0);
             } else {
                 $box["count"] = unpack("N", substr($data, 4, 4))[1];
-                $containerData = substr($data, 8);
+                // $containerData = substr($data, 8);
+                $bit->setOffset($baseOffset + 8 + 8, 0);
             }
-            $box["boxList"] = $this->parseBoxList($containerData, $baseOffset + 4);
+            $box["boxList"] = $this->parseBoxList($bit, $len - 8);
             break;
             /*
              * container type
@@ -239,15 +234,16 @@ class IO_HEIF {
             if ($type === "meta") {
                 $box["version"] = ord($data[0]);
                 $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
-                $containerData = substr($data, 4);
-                $box["boxList"] = $this->parseBoxList($containerData, $baseOffset + 4);
+                $bit->setOffset($baseOffset + 8 + 4, 0);
+                $box["boxList"] = $this->parseBoxList($bit, $len - 8 - 4);
             } else {
-                $containerData = $data;
-                $box["boxList"] = $this->parseBoxList($containerData, $baseOffset);
+                $bit->setOffset($baseOffset + 8, 0);
+                $box["boxList"] = $this->parseBoxList($bit, $len - 8);
             }
             break;
         default:
         }
+        $bit->setOffset($nextOffset, 0);
         return $box;
     }
     function dump($opts = Array()) {
@@ -267,7 +263,7 @@ class IO_HEIF {
     function dumpBox($box, $opts) {
         $type = $box["type"];
         $indentSpace = str_repeat(" ", $opts["indent"] * 4);
-        echo $indentSpace."type:".$type."(".$box["(len)"]."):";
+        echo $indentSpace."type:".$type."(offset:".$box["_offset"]." len:".$box["_length"]."):";
         $desc = getTypeDescription($type);
         if ($desc) {
             echo $desc;
