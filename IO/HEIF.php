@@ -252,6 +252,17 @@ class IO_HEIF {
             $dataLen -= 4;
             $box["boxList"] = $this->parseBoxList($bit, $dataLen);
             break;
+        case "thmb":
+            $box["fromItemID"] = $bit->getUI16BE();
+            $box["itemCount"] = $bit->getUI16BE();
+            $itemIDArray = [];
+            for ($i = 0 ; $i < $box["itemCount"] ; $i++) {
+                $item = [];
+                $item["itemID"] = $bit->getUI16BE();
+                $itemArray []= $item;
+            }
+            $box["itemArray"] = $itemArray;
+            break;
         case "iinf":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -338,6 +349,13 @@ class IO_HEIF {
         case "ispe":
             echo $indentSpace."  version:".$box["version"]." flags:".$box["flags"];
             echo "  width:".$box["width"]." height:".$box["height"].PHP_EOL;
+            break;
+        case "thmb":
+            $this->printfBox($box, $indentSpace."  fromItemID:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
+            foreach ($box["itemArray"] as $item) {
+                $this->printfBox($item, $indentSpace."    itemID:%d".PHP_EOL);
+            }
             break;
         case "infe":
             $this->printfBox($box, $indentSpace."  version:%d flags:%d  itemID:%d itemProtectionIndex:%d".PHP_EOL);
