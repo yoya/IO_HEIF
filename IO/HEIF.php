@@ -294,22 +294,13 @@ class IO_HEIF {
             }
             break;
         default:
-            $box2 = [];;
+            $box2 = [];
             foreach ($box as $key => $data) {
                 if (in_array($key, ["type", "(len)", "boxList", "_offset", "_length"]) === false) {
                     $box2[$key] = $data;
                 }
             }
-            foreach ($box2 as $key => $data) {
-                if (is_array($data)) {
-                    echo $indentSpace."  $key:\n";
-                    foreach ($data as $k => $v) {
-                        echo $indentSpace."    $k:$v\n";
-                    }
-                } else {
-                    echo $indentSpace."  $key:$data\n";
-                }
-            }
+            $this->printTableRecursive($indentSpace."  ", $box2);
             break;
         }
         if (isset($box["boxList"])) {
@@ -330,6 +321,17 @@ class IO_HEIF {
             }
         }
     }
+    function printTableRecursive($indentSpace, $table) {
+        foreach ($table as $key => $value) {
+            if (is_array($value)) {
+                echo $indentSpace."$key:\n";
+                $this->printTableRecursive($indentSpace."  ", $value);
+            } else {
+                echo $indentSpace."$key:$value\n";
+            }
+        }
+    }
+
     function printfBox($box, $format) {
         preg_match_all('/(\S+:[^%]*%\S+|\s+)/', $format, $matches);
         foreach ($matches[1] as $match) {
