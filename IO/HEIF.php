@@ -208,6 +208,38 @@ class IO_HEIF {
             }
             $box["nalArrays"] = $nalArrays;
             break;
+        case "iloc":
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $offsetSize = $bit->getUIBits(4);
+            $lengthSize = $bit->getUIBits(4);
+            $baseOffsetSize = $bit->getUIBits(4);
+            $box["offsetSize"] = $offsetSize;
+            $box["lengthSize"] = $lengthSize;
+            $box["baseOffsetSize"] = $baseOffsetSize;
+            $box["reserved"] = $bit->getUIBits(4);
+            $itemCount = $bit->getUI16BE();
+            $box["itemCount"] = $itemCount;
+            $itemArray = [];
+            for ($i = 0 ; $i < $itemCount; $i++) {
+                $item = [];
+                $item["itemID"] = $bit->getUI16BE();
+                $item["dataReferenceIndex"] = $bit->getUI16BE();
+                $item["baseOffset"] = $bit->getUIBits(8 * $baseOffsetSize);
+                $extentCount = $bit->getUI16BE();
+                $item["extentCount"] = $extentCount;
+                $extentArray = [];
+                for ($j = 0 ; $j < $extentCount ; $j++) {
+                    $extent = [];
+                    $extent["extentOffset"] = $bit->getUIBits(8 * $offsetSize);
+                    $extent["extentLength"] = $bit->getUIBits(8 * $lengthSize);
+                    $extentArray [] = $extent;
+                }
+                $item["extentArray"] = $extentArray;
+                $itemArray []= $item;
+            }
+            $box["itemArray"] = $itemArray;
+            break;
         case "iinf":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -290,6 +322,17 @@ class IO_HEIF {
                 $this->printfBox($nal, $indentSpace."    array_completeness:%d NALUnitType:%d".PHP_EOL);
                 foreach ($nal["nalus"] as $nalu) {
                     $this->printfBox($nalu, $indentSpace."      nalUnitLength:%d nalUnit:%h".PHP_EOL);
+                }
+            }
+            break;
+        case "iloc":
+            $this->printfBox($box, $indentSpace."  version:%d flags:%d  offsetSize:%d lengthSize:%d baseOffsetSize:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
+            foreach ($box["itemArray"] as $item) {
+                $this->printfBox($item, $indentSpace."    itemID:%d dataReferenceIndex:%d baseOffset:%d".PHP_EOL);
+                $this->printfBox($item, $indentSpace."    extentCount:%d".PHP_EOL);
+                foreach ($item["extentArray"] as $extent) {
+                    $this->printfBox($extent, $indentSpace."      extentOffset:%d extentLength:%d".PHP_EOL);
                 }
             }
             break;
