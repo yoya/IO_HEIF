@@ -207,19 +207,18 @@ class IO_HEIF {
                 $nalArrays []= $nal;
             }
             $box["nalArrays"] = $nalArrays;
-            // $box[""]  = $bit->getUIBits();
-            // $box[""]  = $bit->getUI();
             break;
         case "iinf":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
             if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
                 $box["count"] = $bit->getUI16BE();
-                $box["boxList"] = $this->parseBoxList($bit, $dataLen - 6);
+                $dataLen -= 6;
             } else {
                 $box["count"] = $bit->getUI32BE();
-                $box["boxList"] = $this->parseBoxList($bit, $dataLen - 8);
+                $dataLen -= 8;
             }
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen);
             break;
             /*
              * container type
@@ -233,10 +232,9 @@ class IO_HEIF {
             if ($type === "meta") {
                 $box["version"] = $bit->getUI8();
                 $box["flags"] = $bit->getUIBits(8 * 3);
-                $box["boxList"] = $this->parseBoxList($bit, $dataLen - 4);
-            } else {
-                $box["boxList"] = $this->parseBoxList($bit, $dataLen);
+                $dataLen -= 4;
             }
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen);
             break;
         default:
         }
