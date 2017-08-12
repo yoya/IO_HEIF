@@ -74,153 +74,152 @@ class IO_HEIF {
         if ($bit->hasNextData($len - 8) === false) {
             throw new Exception("parseBox: hasNext(len:$len - 8) === false");
         }
-        $data = $bit->getData($len - 8);
-        list($nextOffset, $dummy) = $bit->getOffset();
+        $nextOffset = $baseOffset + $len;
+        $dataLen = $len - 8; // 8 = len(4) + type(4)
         switch($type) {
         case "ftyp":
-            $types = str_split($data, 4);
-            $box["major"] = $types[0];
-            $box["minor"] = unpack("N", $types[1])[1];
-            $box["alt"] = array_slice($types, 2);
+            $box["major"] = $bit->getData(4);
+            $box["minor"] = $bit->getUI32BE();
+            $altdata = $bit->getData($dataLen - 8);
+            $box["alt"] = str_split($altdata, 4);
             break;
         case "hdlr":
-            $box["version"] = ord($data[0]);
-            $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
-            $box["conponentType"] = substr($data, 4, 4);
-            $box["conponentSubType"] = substr($data, 8, 4);
-            $box["conponentManufacturer"] = substr($data, 12, 4);
-            $box["conponentFlags"] = unpack("N", substr($data, 16, 4))[1];
-            $box["conponentFlagsMask"] = unpack("N", substr($data, 20, 4))[1];
-            $box["conponentName"] = substr($data, 24);
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["conponentType"] = $bit->getData(4);
+            $box["conponentSubType"] = $bit->getData(4);
+            $box["conponentManufacturer"] = $bit->getData(4);
+            $box["conponentFlags"] = $bit->getUI32BE();
+            $box["conponentFlagsMask"] = $bit->getUI32BE();
+            $box["conponentName"] = $bit->getData($dataLen - 24);
             break;
         case "mvhd":
-            $box["version"] = ord($data[0]);
-            $box["flag"] = unpack("N", "\0".substr($data, 1, 3))[1];
-            $box["creationTime"] = unpack("N", substr($data, 4, 4))[1];
-            $box["modificationTime"] = unpack("N", substr($data, 8, 4))[1];
-            $box["timeScale"] = unpack("N", substr($data, 12, 4))[1];
-            $box["duration"] = unpack("N", substr($data, 16, 4))[1];
-            $box["preferredRate"] = unpack("N", substr($data, 20, 4))[1];
-            $box["preferredVolume"] = unpack("N", substr($data, 24, 2))[1];
-            $box["reserved"] =substr($data, 26, 10);
-            $box["MatrixStructure"] = unpack("N*", substr($data, 36, 36));
-            $box["previewTime"] = unpack("N", substr($data, 72, 4))[1];
-            $box["peviewDuration"] = unpack("N", substr($data, 76, 4))[1];
-            $box["posterTime"] = unpack("N", substr($data, 80, 4))[1];
-            $box["selectionTime"] = unpack("N", substr($data, 84, 4))[1];
-            $box["selectionDuration"] = unpack("N", substr($data, 88, 4))[1];
-            $box["currentTime"] = unpack("N", substr($data, 92, 4))[1];
-            $box["nextTrackID"] = unpack("N", substr($data, 96, 4))[1];
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["creationTime"] = $bit->getUI32BE();
+            $box["modificationTime"] = $bit->getUI32BE();
+            $box["timeScale"] = $bit->getUI32BE();
+            $box["duration"] = $bit->getUI32BE();
+            $box["preferredRate"] = $bit->getUI32BE();
+            $box["preferredVolume"] = $bit->getUI32BE();
+            $box["reserved"] = $bit->getData(10);
+            $matrixStructure = [];
+            for ($i = 0 ; $i < 9 ; $i++) {
+                $matrixStructure []= $bit->getSI32BE(); // XXX: SI ? UI ?
+            }
+            $box["MatrixStructure"] = $matrixStructure;
+            $box["previewTime"] = $bit->getUI32BE();
+            $box["peviewDuration"] = $bit->getUI32BE();
+            $box["posterTime"] = $bit->getUI32BE();
+            $box["selectionTime"] = $bit->getUI32BE();
+            $box["selectionDuration"] = $bit->getUI32BE();
+            $box["currentTime"] = $bit->getUI32BE();
+            $box["nextTrackID"] = $bit->getUI32BE();
             break;
         case "tkhd":
-            $box["version"] = ord($data[0]);
-            $box["flag"] = unpack("N", "\0".substr($data, 1, 3))[1];
-            $box["creationTime"] = unpack("N", substr($data, 4, 4))[1];
-            $box["modificationTime"] = unpack("N", substr($data, 8, 4))[1];
-            $box["trackId"] = unpack("N", substr($data, 12, 4))[1];
-            $box["reserved"] =substr($data, 16, 4);
-            $box["duration"] = unpack("N", substr($data, 20, 4))[1];
-            $box["reserved"] =substr($data, 24, 8);
-            $box["layer"] = unpack("N", substr($data, 32, 2))[1];
-            $box["alternat4eGroup"] = unpack("N", substr($data, 34, 2))[1];
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["creationTime"] = $bit->getUI32BE();
+            $box["modificationTime"] = $bit->getUI32BE();
+            $box["trackId"] = $bit->getUI32BE();
+            $box["reserved"] = $bit->getData(4);
+            $box["duration"] = $bit->getUI32BE();
+            $box["reserved"] = $bit->getData(4);
+            $box["layer"] = $bit->getUI32BE();
+            $box["alternat4eGroup"] = $bit->getUI32BE();
             break;
         case "ispe":
-            $box["version"] = ord($data[0]);
-            $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
-            $box["width"]  = unpack("N", substr($data, 4, 4))[1];
-            $box["height"] = unpack("N", substr($data, 8, 4))[1];
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["width"]  = $bit->getUI32BE();
+            $box["height"] = $bit->getUI32BE();
             break;
         case "pasp":
-            $box["hspace"]  = unpack("N", substr($data, 0, 4))[1];
-            $box["vspace"] = unpack("N", substr($data, 4, 4))[1];
+            $box["hspace"] = $bit->getUI32BE();
+            $box["vspace"] = $bit->getUI32BE();
             break;
         case "hvcC":
             // https://gist.github.com/yohhoy/2abc28b611797e7b407ae98faa7430e7
-            $hb = new IO_Bit();
-            $hb->input($data);
-            $box["version"]  = $hb->getUI8();
-            $box["profileSpace"]  = $hb->getUIBits(2);
-            $box["tierFlag"]  = $hb->getUIBit();
-            $box["profileIdc"]  = $hb->getUIBits(5);
-            $box["profileCompatibilityFlags"]  = $hb->getUI32BE();
-            $box["constraintIndicatorFlags"]  = $hb->getUIBits(48);
-            $box["levelIdc"]  = $hb->getUI8();
-            $reserved = $hb->getUIBits(4);
+            $box["version"]  = $bit->getUI8();
+            $box["profileSpace"] = $bit->getUIBits(2);
+            $box["tierFlag"] = $bit->getUIBit();
+            $box["profileIdc"] = $bit->getUIBits(5);
+            $box["profileCompatibilityFlags"] = $bit->getUI32BE();
+            $box["constraintIndicatorFlags"] = $bit->getUIBits(48);
+            $box["levelIdc"] = $bit->getUI8();
+            $reserved = $bit->getUIBits(4);
             if ($reserved !== 0xF) {
                 var_dump($box);
                 throw new Exception("reserved({$reserved}) !== 0xF");
             }
-            $box["minSpatialSegmentationIdc"]  = $hb->getUIBits(12);
-            $reserved = $hb->getUIBits(6);
+            $box["minSpatialSegmentationIdc"]  = $bit->getUIBits(12);
+            $reserved = $bit->getUIBits(6);
             if ($reserved !== 0x3F) {
                 var_dump($box);
                 throw new Exception("reserved({$reserved}) !== 0x3F");
             }
-            $box["parallelismType"]  = $hb->getUIBits(2);
-            $reserved = $hb->getUIBits(6);
+            $box["parallelismType"]  = $bit->getUIBits(2);
+            $reserved = $bit->getUIBits(6);
             if ($reserved !== 0x3F) {
                 var_dump($box);
                 throw new Exception("reserved({$reserved}) !== 0x3F");
             }
-            $box["chromaFormat"]  = $hb->getUIBits(2);
-            $reserved = $hb->getUIBits(5);
+            $box["chromaFormat"]  = $bit->getUIBits(2);
+            $reserved = $bit->getUIBits(5);
             if ($reserved !== 0x1F) {
                 var_dump($box);
                 throw new Exception("reserved({$reserved}) !== 0x1F");
             }
-            $box["bitDepthLumaMinus8"]  = $hb->getUIBits(3);
-            $reserved = $hb->getUIBits(5);
+            $box["bitDepthLumaMinus8"]  = $bit->getUIBits(3);
+            $reserved = $bit->getUIBits(5);
             if ($reserved !== 0x1F) {
                 var_dump($box);
                 throw new Exception("reserved({$reserved}) !== 0x1F");
             }
-            $box["bitDepthChromaMinus8"]  = $hb->getUIBits(3);
-            $box["avgFrameRate"]  = $hb->getUIBits(16);
-            $box["constantFrameRate"]  = $hb->getUIBits(2);
-            $box["numTemporalLayers"]  = $hb->getUIBits(3);
-            $box["temporalIdNested"]  = $hb->getUIBit();
-            $box["lengthSizeMinusOne"]  = $hb->getUIBits(2);
+            $box["bitDepthChromaMinus8"]  = $bit->getUIBits(3);
+            $box["avgFrameRate"]  = $bit->getUIBits(16);
+            $box["constantFrameRate"]  = $bit->getUIBits(2);
+            $box["numTemporalLayers"]  = $bit->getUIBits(3);
+            $box["temporalIdNested"]  = $bit->getUIBit();
+            $box["lengthSizeMinusOne"]  = $bit->getUIBits(2);
             
-            $box["numOfArrays"] = $numOfArrays = $hb->getUI8();
+            $box["numOfArrays"] = $numOfArrays = $bit->getUI8();
             $nalArrays = [];
             for ($i = 0 ; $i < $numOfArrays ; $i++) {
                 $nal = [];
-                $nal["array_completeness"] = $hb->getUIBit();
-                $reserved = $hb->getUIBit();
+                $nal["array_completeness"] = $bit->getUIBit();
+                $reserved = $bit->getUIBit();
                 if ($reserved !== 0) {
                     var_dump($box);
                     var_dump($nalArrays);
                     throw new Exception("reserved({$reserved}) !== 0");
                 }
-                $nal["NALUnitType"] = $hb->getUIBits(6);
-                $nal["numNalus"] = $numNalus = $hb->getUI16BE();
+                $nal["NALUnitType"] = $bit->getUIBits(6);
+                $nal["numNalus"] = $numNalus = $bit->getUI16BE();
                 $nalus = [];
                 for ($j = 0 ; $j < $numNalus ; $j++) {
                     $nalu = [];
-                    $nalu["nalUnitLength"] = $nalUnitLength = $hb->getUI16BE();
-                    $nalu["nalUnit"] = $hb->getData($nalUnitLength);
+                    $nalu["nalUnitLength"] = $nalUnitLength = $bit->getUI16BE();
+                    $nalu["nalUnit"] = $bit->getData($nalUnitLength);
                     $nalus []= $nalu;
                 }
                 $nal["nalus"] = $nalus;
                 $nalArrays []= $nal;
             }
             $box["nalArrays"] = $nalArrays;
-            // $box[""]  = $hb->getUIBits();
-            // $box[""]  = $hb->getUI();
+            // $box[""]  = $bit->getUIBits();
+            // $box[""]  = $bit->getUI();
             break;
         case "iinf":
-            $box["version"] = ord($data[0]);
-            $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
             if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
-                $box["count"] = unpack("n", substr($data, 4, 2))[1];
-                // $containerData = substr($data, 6);
-                $bit->setOffset($baseOffset + 8 + 6, 0);
+                $box["count"] = $bit->getUI16BE();
+                $box["boxList"] = $this->parseBoxList($bit, $dataLen - 6);
             } else {
-                $box["count"] = unpack("N", substr($data, 4, 4))[1];
-                // $containerData = substr($data, 8);
-                $bit->setOffset($baseOffset + 8 + 8, 0);
+                $box["count"] = $bit->getUI32BE();
+                $box["boxList"] = $this->parseBoxList($bit, $dataLen - 8);
             }
-            $box["boxList"] = $this->parseBoxList($bit, $len - 8);
             break;
             /*
              * container type
@@ -232,13 +231,11 @@ class IO_HEIF {
         case "iprp": // item properties
         case "ipco": // item property container
             if ($type === "meta") {
-                $box["version"] = ord($data[0]);
-                $box["flags"] = unpack("N", "\0".substr($data, 1, 3))[1];
-                $bit->setOffset($baseOffset + 8 + 4, 0);
-                $box["boxList"] = $this->parseBoxList($bit, $len - 8 - 4);
+                $box["version"] = $bit->getUI8();
+                $box["flags"] = $bit->getUIBits(8 * 3);
+                $box["boxList"] = $this->parseBoxList($bit, $dataLen - 4);
             } else {
-                $bit->setOffset($baseOffset + 8, 0);
-                $box["boxList"] = $this->parseBoxList($bit, $len - 8);
+                $box["boxList"] = $this->parseBoxList($bit, $dataLen);
             }
             break;
         default:
