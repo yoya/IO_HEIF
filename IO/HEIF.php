@@ -246,6 +246,12 @@ class IO_HEIF {
             }
             $box["itemArray"] = $itemArray;
             break;
+        case "iref":
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $dataLen -= 4;
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen);
+            break;
         case "iinf":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -373,9 +379,11 @@ class IO_HEIF {
                     $box2[$key] = $data;
                 }
             }
-            if (count($box2) === 0) {
+            /*
+            if ((! isset($box["boxList"])) && (count($box2) === 0)) {
                 echo "XXXXXXXXXXXXXXXXXXXXX".PHP_EOL;
             }
+            */
             if (isset($box["version"])) {
                 $this->printfBox($box, $indentSpace."  version:%d flags:%d".PHP_EOL);
             }
