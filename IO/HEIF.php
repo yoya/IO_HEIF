@@ -21,6 +21,7 @@ function getTypeDescription($type) {
         "pitm" => "Prinary item referene",
         "iloc" => "Item location",
         "iinf" => "Item information",
+        "infe" => "Item information entry",
         //
         "iref" => "Item Reference Box",
         "dimg" => "Derived Image",
@@ -138,6 +139,11 @@ class IO_HEIF {
             $box["hspace"] = $bit->getUI32BE();
             $box["vspace"] = $bit->getUI32BE();
             break;
+        case "pitm":
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["itemID"] = $bit->getUI16BE();
+            break;
         case "hvcC":
             // https://gist.github.com/yohhoy/2abc28b611797e7b407ae98faa7430e7
             $box["version"]  = $bit->getUI8();
@@ -252,6 +258,28 @@ class IO_HEIF {
             }
             $box["boxList"] = $this->parseBoxList($bit, $dataLen);
             break;
+        case "infe":
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["itemID"] = $bit->getUI16BE();
+            $box["itemProtectionIndex"] = $bit->getUI16BE();
+            if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
+                ;
+            } else {
+                $box["itemType"] = $bit->getData(4);
+            }
+            $box["itemName"] = $bit->getDataUntil("\0");
+            $box["contentType"] = null;
+            $box["contentEncoding"] = null;
+            list($offset, $dummy) = $bit->getOffset();
+            if (($offset - $baseOffset) < $dataLen) {
+                $box["contentType"] = $bit->getDataUntil("\0");
+                list($offset, $dummy) = $bit->getOffset();
+                if (($offset - $baseOffset) < $dataLen) {
+                    $box["contentEncoding"] = $bit->getDataUntil("\0");
+                }
+            }
+            break;
             /*
              * container type
              */
@@ -297,8 +325,6 @@ class IO_HEIF {
         }
         echo "\n";
         switch ($type) {
-        case "meta":
-            break;
         case "ftyp":
             echo $indentSpace."  major:".$box["major"]." minor:".$box["minor"];
             echo "  alt:".join(", ", $box["alt"]).PHP_EOL;
@@ -306,6 +332,10 @@ class IO_HEIF {
         case "ispe":
             echo $indentSpace."  version:".$box["version"]." flags:".$box["flags"];
             echo "  width:".$box["width"]." height:".$box["height"].PHP_EOL;
+            break;
+        case "infe":
+            $this->printfBox($box, $indentSpace."  version:%d flags:%d  itemID:%d itemProtectionIndex:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  itemName:%s contentType:%s contentEncoding:%s".PHP_EOL);
             break;
         case "pasp":
             echo $indentSpace."  hspace:".$box["hspace"]." vspace:".$box["vspace"].PHP_EOL;
@@ -339,9 +369,15 @@ class IO_HEIF {
         default:
             $box2 = [];
             foreach ($box as $key => $data) {
-                if (in_array($key, ["type", "(len)", "boxList", "_offset", "_length"]) === false) {
+                if (in_array($key, ["type", "(len)", "boxList", "_offset", "_length", "version", "flags"]) === false) {
                     $box2[$key] = $data;
                 }
+            }
+            if (count($box2) === 0) {
+                echo "XXXXXXXXXXXXXXXXXXXXX".PHP_EOL;
+            }
+            if (isset($box["version"])) {
+                $this->printfBox($box, $indentSpace."  version:%d flags:%d".PHP_EOL);
             }
             $this->printTableRecursive($indentSpace."  ", $box2);
             break;
