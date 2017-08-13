@@ -58,7 +58,14 @@ class IO_HEIF {
         $boxList = [];
         list($baseOffset, $dummy) = $bit->getOffset();
         while ($bit->hasNextData(8) && ($bit->getOffset()[0] < ($baseOffset + $length))) {
-            $box = $this->parseBox($bit);
+            try {
+                $type = str_split($bit->getData(8), 4)[1];
+                $bit->incrementOffset(-8, 0);
+                $box = $this->parseBox($bit);
+            } catch (Exception $e) {
+                fwrite(STDERR, "ERROR type:$type".PHP_EOL);
+                throw $e;
+            }
             $boxList []= $box;
         }
         return $boxList;
