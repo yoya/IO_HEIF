@@ -51,9 +51,9 @@ class IO_HEIF {
         $bit = new IO_Bit();
         $bit->input($heifdata);
         $this->_heifdata = $heifdata;
-        $this->boxTree = $this->parseBoxList($bit, strlen($heifdata));
+        $this->boxTree = $this->parseBoxList($bit, strlen($heifdata), null);
     }
-    function parseBoxList($bit, $length) {
+    function parseBoxList($bit, $length, $parentType) {
         // echo "parseBoxList(".strlen($data).")\n";
         $boxList = [];
         list($baseOffset, $dummy) = $bit->getOffset();
@@ -61,7 +61,7 @@ class IO_HEIF {
             try {
                 $type = str_split($bit->getData(8), 4)[1];
                 $bit->incrementOffset(-8, 0);
-                $box = $this->parseBox($bit);
+                $box = $this->parseBox($bit, $parentType);
             } catch (Exception $e) {
                 fwrite(STDERR, "ERROR type:$type".PHP_EOL);
                 throw $e;
@@ -71,7 +71,7 @@ class IO_HEIF {
         return $boxList;
     }
     
-    function parseBox($bit) {
+    function parseBox($bit, $parentType) {
         list($baseOffset, $dummy) = $bit->getOffset();
         $len = $bit->getUI32BE();
         if ($len < 8) {
@@ -268,7 +268,7 @@ class IO_HEIF {
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
             $dataLen -= 4;
-            $box["boxList"] = $this->parseBoxList($bit, $dataLen);
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type);
             break;
         case "thmb":
             $box["fromItemID"] = $bit->getUI16BE();
@@ -316,7 +316,7 @@ class IO_HEIF {
                 $box["count"] = $bit->getUI32BE();
                 $dataLen -= 8;
             }
-            $box["boxList"] = $this->parseBoxList($bit, $dataLen);
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type);
             break;
         case "infe":
             $box["version"] = $bit->getUI8();
@@ -354,7 +354,7 @@ class IO_HEIF {
                 $box["flags"] = $bit->getUIBits(8 * 3);
                 $dataLen -= 4;
             }
-            $box["boxList"] = $this->parseBoxList($bit, $dataLen);
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type);
             break;
         default:
         }
