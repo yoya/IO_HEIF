@@ -230,13 +230,21 @@ class IO_HEIF {
             $box["offsetSize"] = $offsetSize;
             $box["lengthSize"] = $lengthSize;
             $box["baseOffsetSize"] = $baseOffsetSize;
-            $box["reserved"] = $bit->getUIBits(4);
+            if ($box["version"] === 0) {
+                $box["reserved"] = $bit->getUIBits(4);
+            } else {
+                $indexSize = $bit->getUIBits(4);
+                $box["indexSize"] = $indexSize;
+            }
             $itemCount = $bit->getUI16BE();
             $box["itemCount"] = $itemCount;
             $itemArray = [];
             for ($i = 0 ; $i < $itemCount; $i++) {
                 $item = [];
                 $item["itemID"] = $bit->getUI16BE();
+                if ($box["version"] >= 1) {
+                    $item["constructionMethod"] = $bit->getUI16BE();
+                }
                 $item["dataReferenceIndex"] = $bit->getUI16BE();
                 $item["baseOffset"] = $bit->getUIBits(8 * $baseOffsetSize);
                 $extentCount = $bit->getUI16BE();
@@ -245,6 +253,9 @@ class IO_HEIF {
                 for ($j = 0 ; $j < $extentCount ; $j++) {
                     $extent = [];
                     $extent["extentOffset"] = $bit->getUIBits(8 * $offsetSize);
+                    if ($box["version"] >= 1) {
+                        $extent["extentIndex"] = $bit->getUIBits(8 * $indexSize);
+                    }
                     $extent["extentLength"] = $bit->getUIBits(8 * $lengthSize);
                     $extentArray [] = $extent;
                 }
@@ -439,13 +450,25 @@ class IO_HEIF {
             }
             break;
         case "iloc":
-            $this->printfBox($box, $indentSpace."  version:%d flags:%d  offsetSize:%d lengthSize:%d baseOffsetSize:%d".PHP_EOL);
+            if  ($box["version"] === 0) {
+                $this->printfBox($box, $indentSpace."  version:%d flags:%d  offsetSize:%d lengthSize:%d baseOffsetSize:%d".PHP_EOL);
+            } else {
+                $this->printfBox($box, $indentSpace."  version:%d flags:%d  offsetSize:%d lengthSize:%d baseOffsetSize:%d indexSize:%d".PHP_EOL);
+            }
             $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
             foreach ($box["itemArray"] as $item) {
-                $this->printfBox($item, $indentSpace."    itemID:%d dataReferenceIndex:%d baseOffset:%d".PHP_EOL);
+                if  ($box["version"] === 0) {
+                    $this->printfBox($item, $indentSpace."    itemID:%d dataReferenceIndex:%d baseOffset:%d".PHP_EOL);
+                } else {
+                    $this->printfBox($item, $indentSpace."    itemID:%d constructionMethod:%d dataReferenceIndex:%d baseOffset:%d".PHP_EOL);
+                }
                 $this->printfBox($item, $indentSpace."    extentCount:%d".PHP_EOL);
                 foreach ($item["extentArray"] as $extent) {
-                    $this->printfBox($extent, $indentSpace."      extentOffset:%d extentLength:%d".PHP_EOL);
+                    if ($box["version"] === 0) {
+                        $this->printfBox($extent, $indentSpace."      extentOffset:%d extentLength:%d".PHP_EOL);
+                    } else {
+                        $this->printfBox($extent, $indentSpace."      extentOffset:%d extentIndex:%d extentLength:%d".PHP_EOL);
+                    }
                 }
             }
             break;
