@@ -263,6 +263,31 @@ class IO_HEIF {
             }
             $box["itemArray"] = $itemArray;
             break;
+        case "ipma":
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["entryCount"] = $bit->getUI32BE();
+            $entryArray = [];
+            for ($i = 0 ; $i < $box["entryCount"] ; $i++) {
+                $entry = [];
+                $entry["itemID"] = $bit->getUI16BE();
+                $entry["associationCount"] = $bit->getUI8();
+                $associationArray = [];
+                for ($j = 0 ; $j < $entry["associationCount"] ; $j++) {
+                    $association = [];
+                    $association["essential"] = $bit->getUIBit();
+                    if ($box["flags"] & 1) {
+                        $association["propertyIndex"] = $bit->getUIBits(15);
+                    }  else {
+                        $association["propertyIndex"] = $bit->getUIBits(7);
+                    }
+                    $associationArray [] = $association;
+                }
+                $entry["associationArray"] = $associationArray;
+                $entryArray []= $entry;
+            }
+            $box["entryArray"] = $entryArray;
+            break;
         case "iinf":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -357,6 +382,17 @@ class IO_HEIF {
                 $this->printfBox($item, $indentSpace."    itemID:%d".PHP_EOL);
             }
             break;
+        case "ipma":
+            $this->printfBox($box, $indentSpace."  version:%d flags:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  entryCount:%d".PHP_EOL);
+            foreach ($box["entryArray"] as $entry) {
+                $this->printfBox($entry, $indentSpace."    itemID:%d".PHP_EOL);
+                $this->printfBox($entry, $indentSpace."    associationCount:%d".PHP_EOL);
+                foreach ($entry["associationArray"] as $assoc) {
+                    $this->printfBox($assoc, $indentSpace."      essential:%d propertyIndex:%d".PHP_EOL);
+                }
+            }
+            break;
         case "infe":
             $this->printfBox($box, $indentSpace."  version:%d flags:%d  itemID:%d itemProtectionIndex:%d".PHP_EOL);
             $this->printfBox($box, $indentSpace."  itemName:%s contentType:%s contentEncoding:%s".PHP_EOL);
@@ -397,11 +433,6 @@ class IO_HEIF {
                     $box2[$key] = $data;
                 }
             }
-            /*
-            if ((! isset($box["boxList"])) && (count($box2) === 0)) {
-                echo "XXXXXXXXXXXXXXXXXXXXX".PHP_EOL;
-            }
-            */
             if (isset($box["version"])) {
                 $this->printfBox($box, $indentSpace."  version:%d flags:%d".PHP_EOL);
             }
