@@ -360,6 +360,22 @@ class IO_HEIF {
     function dumpBox($box, $opts) {
         $type = $box["type"];
         $indentSpace = str_repeat(" ", $opts["indent"] * 4);
+        if (! empty($opts["typeonly"])) {
+            $this->printfBox($box, $indentSpace."type:%s");
+            if (isset($box["version"])) {
+                $this->printfBox($box, " version:%d");
+            }
+            if (isset($box["flags"])) {
+                $this->printfBox($box, " flags:%d");
+            }
+            echo PHP_EOL;
+            if (isset($box["boxList"])) {
+                $opts["indent"] += 1;
+                $this->dumpBoxList($box["boxList"], $opts);
+            }
+            return ;
+        }
+
         echo $indentSpace."type:".$type."(offset:".$box["_offset"]." len:".$box["_length"]."):";
         $desc = getTypeDescription($type);
         if ($desc) {
