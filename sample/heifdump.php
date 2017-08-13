@@ -11,10 +11,20 @@ if ((isset($options['f']) === false) || (is_readable($options['f']) === false)) 
     exit(1);
 }
 
-$heifdata = file_get_contents($options['f']);
+$filename = $options['f'];
+$heifdata = file_get_contents($filename);
 
 $heif = new IO_HEIF();
-$heif->parse($heifdata);
+try {
+    $heif->parse($heifdata);
+} catch (Exception $e) {
+    echo "ERROR: heifdump: $filename:".PHP_EOL;
+    echo $e->getMessage()." file:".$e->getFile()." line:".$e->getLine().PHP_EOL;
+    echo $e->getTraceAsString().PHP_EOL;
+    exit (1);
+}
+
+
 
 $opts = array();
 if (isset($options['h'])) {
@@ -26,4 +36,5 @@ if (isset($options['t'])) {
 if (isset($options['v'])) {
     $opts['verbose'] = true;
 }
+
 $heif->dump($opts);
