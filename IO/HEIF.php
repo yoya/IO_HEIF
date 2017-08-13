@@ -222,47 +222,59 @@ class IO_HEIF {
             $box["nalArrays"] = $nalArrays;
             break;
         case "iloc":
-            $box["version"] = $bit->getUI8();
-            $box["flags"] = $bit->getUIBits(8 * 3);
-            $offsetSize = $bit->getUIBits(4);
-            $lengthSize = $bit->getUIBits(4);
-            $baseOffsetSize = $bit->getUIBits(4);
-            $box["offsetSize"] = $offsetSize;
-            $box["lengthSize"] = $lengthSize;
-            $box["baseOffsetSize"] = $baseOffsetSize;
-            if ($box["version"] === 0) {
-                $box["reserved"] = $bit->getUIBits(4);
+            if ($parentType === "iref") {
+                $box["itemID"] = $bit->getUI16BE();
+                $box["itemCount"] = $bit->getUI16BE();
+                $itemArray = [];
+                for ($i = 0 ; $i < $box["itemCount"]; $i++) {
+                    $item = [];
+                    $item["itemID"] = $bit->getUI16BE();
+                    $itemArray []= $item;
+                }
+                $box["itemArray"] = $itemArray;
             } else {
-                $indexSize = $bit->getUIBits(4);
-                $box["indexSize"] = $indexSize;
-            }
-            $itemCount = $bit->getUI16BE();
-            $box["itemCount"] = $itemCount;
-            $itemArray = [];
-            for ($i = 0 ; $i < $itemCount; $i++) {
-                $item = [];
-                $item["itemID"] = $bit->getUI16BE();
-                if ($box["version"] >= 1) {
-                    $item["constructionMethod"] = $bit->getUI16BE();
+                $box["version"] = $bit->getUI8();
+                $box["flags"] = $bit->getUIBits(8 * 3);
+                $offsetSize = $bit->getUIBits(4);
+                $lengthSize = $bit->getUIBits(4);
+                $baseOffsetSize = $bit->getUIBits(4);
+                $box["offsetSize"] = $offsetSize;
+                $box["lengthSize"] = $lengthSize;
+                $box["baseOffsetSize"] = $baseOffsetSize;
+                if ($box["version"] === 0) {
+                    $box["reserved"] = $bit->getUIBits(4);
+                } else {
+                    $indexSize = $bit->getUIBits(4);
+                    $box["indexSize"] = $indexSize;
                 }
-                $item["dataReferenceIndex"] = $bit->getUI16BE();
-                $item["baseOffset"] = $bit->getUIBits(8 * $baseOffsetSize);
-                $extentCount = $bit->getUI16BE();
-                $item["extentCount"] = $extentCount;
-                $extentArray = [];
-                for ($j = 0 ; $j < $extentCount ; $j++) {
-                    $extent = [];
-                    $extent["extentOffset"] = $bit->getUIBits(8 * $offsetSize);
+                $itemCount = $bit->getUI16BE();
+                $box["itemCount"] = $itemCount;
+                $itemArray = [];
+                for ($i = 0 ; $i < $itemCount; $i++) {
+                    $item = [];
+                    $item["itemID"] = $bit->getUI16BE();
                     if ($box["version"] >= 1) {
-                        $extent["extentIndex"] = $bit->getUIBits(8 * $indexSize);
+                        $item["constructionMethod"] = $bit->getUI16BE();
                     }
-                    $extent["extentLength"] = $bit->getUIBits(8 * $lengthSize);
-                    $extentArray [] = $extent;
+                    $item["dataReferenceIndex"] = $bit->getUI16BE();
+                    $item["baseOffset"] = $bit->getUIBits(8 * $baseOffsetSize);
+                    $extentCount = $bit->getUI16BE();
+                    $item["extentCount"] = $extentCount;
+                    $extentArray = [];
+                    for ($j = 0 ; $j < $extentCount ; $j++) {
+                        $extent = [];
+                        $extent["extentOffset"] = $bit->getUIBits(8 * $offsetSize);
+                        if ($box["version"] >= 1) {
+                            $extent["extentIndex"] = $bit->getUIBits(8 * $indexSize);
+                        }
+                        $extent["extentLength"] = $bit->getUIBits(8 * $lengthSize);
+                        $extentArray [] = $extent;
+                    }
+                    $item["extentArray"] = $extentArray;
+                    $itemArray []= $item;
                 }
-                $item["extentArray"] = $extentArray;
-                $itemArray []= $item;
+                $box["itemArray"] = $itemArray;
             }
-            $box["itemArray"] = $itemArray;
             break;
         case "iref":
             $box["version"] = $bit->getUI8();
@@ -450,24 +462,32 @@ class IO_HEIF {
             }
             break;
         case "iloc":
-            if  ($box["version"] === 0) {
-                $this->printfBox($box, $indentSpace."  version:%d flags:%d  offsetSize:%d lengthSize:%d baseOffsetSize:%d".PHP_EOL);
-            } else {
-                $this->printfBox($box, $indentSpace."  version:%d flags:%d  offsetSize:%d lengthSize:%d baseOffsetSize:%d indexSize:%d".PHP_EOL);
-            }
-            $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
-            foreach ($box["itemArray"] as $item) {
-                if  ($box["version"] === 0) {
-                    $this->printfBox($item, $indentSpace."    itemID:%d dataReferenceIndex:%d baseOffset:%d".PHP_EOL);
-                } else {
-                    $this->printfBox($item, $indentSpace."    itemID:%d constructionMethod:%d dataReferenceIndex:%d baseOffset:%d".PHP_EOL);
+            if (isset($box["version"]) === false) {
+                $this->printfBox($box, $indentSpace."  itemID:%d".PHP_EOL);
+                $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
+                foreach ($box["itemArray"] as $item) {
+                    $this->printfBox($item, $indentSpace."    itemID:%d".PHP_EOL);
                 }
-                $this->printfBox($item, $indentSpace."    extentCount:%d".PHP_EOL);
-                foreach ($item["extentArray"] as $extent) {
-                    if ($box["version"] === 0) {
-                        $this->printfBox($extent, $indentSpace."      extentOffset:%d extentLength:%d".PHP_EOL);
+            } else {
+                if  ($box["version"] === 0) {
+                    $this->printfBox($box, $indentSpace."  version:%d flags:%d  offsetSize:%d lengthSize:%d baseOffsetSize:%d".PHP_EOL);
+                } else {
+                    $this->printfBox($box, $indentSpace."  version:%d flags:%d  offsetSize:%d lengthSize:%d baseOffsetSize:%d indexSize:%d".PHP_EOL);
+                }
+                $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
+                foreach ($box["itemArray"] as $item) {
+                    if  ($box["version"] === 0) {
+                        $this->printfBox($item, $indentSpace."    itemID:%d dataReferenceIndex:%d baseOffset:%d".PHP_EOL);
                     } else {
-                        $this->printfBox($extent, $indentSpace."      extentOffset:%d extentIndex:%d extentLength:%d".PHP_EOL);
+                        $this->printfBox($item, $indentSpace."    itemID:%d constructionMethod:%d dataReferenceIndex:%d baseOffset:%d".PHP_EOL);
+                    }
+                    $this->printfBox($item, $indentSpace."    extentCount:%d".PHP_EOL);
+                    foreach ($item["extentArray"] as $extent) {
+                        if ($box["version"] === 0) {
+                            $this->printfBox($extent, $indentSpace."      extentOffset:%d extentLength:%d".PHP_EOL);
+                        } else {
+                            $this->printfBox($extent, $indentSpace."      extentOffset:%d extentIndex:%d extentLength:%d".PHP_EOL);
+                        }
                     }
                 }
             }
