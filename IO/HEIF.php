@@ -47,11 +47,26 @@ class IO_HEIF {
     var $_chunkList = null;
     var $_heifdata = null;
     var $boxTree = [];
+    var $ilocOffsetTable = []; // ItemId => offset
     function parse($heifdata) {
         $bit = new IO_Bit();
         $bit->input($heifdata);
         $this->_heifdata = $heifdata;
         $this->boxTree = $this->parseBoxList($bit, strlen($heifdata), null);
+        // offset linking iloc=baseOffset <=> mdat
+        foreach ($this->boxTree as &$box) {
+            if ($box["type"] !== "mdat") {
+                continue;
+            }
+            $mdatStart = $box["_offset"];
+            $mdatNext = $mdatStart + $box["_length"];
+            foreach ($this->ilocOffsetTable as $itemId => $offset) {
+                if (($mdatStart <= $offset) && ($offset < $mdatNext)) {
+                    $box["_ilocRefOffsetRelative"] = $offset - $mdatStart;
+                }
+            }
+        }
+        unset($box);
     }
     function parseBoxList($bit, $length, $parentType) {
         // echo "parseBoxList(".strlen($data).")\n";
@@ -258,6 +273,7 @@ class IO_HEIF {
                     }
                     $item["dataReferenceIndex"] = $bit->getUI16BE();
                     $item["baseOffset"] = $bit->getUIBits(8 * $baseOffsetSize);
+                    $this->ilocOffsetTable[$item["itemID"]] = $item["baseOffset"];
                     $extentCount = $bit->getUI16BE();
                     $item["extentCount"] = $extentCount;
                     $extentArray = [];
