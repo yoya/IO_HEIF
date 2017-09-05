@@ -553,6 +553,36 @@ class IO_HEIF {
         }
     }
     function build($opts = array()) {
-        ;
+        $bit = new IO_Bit();
+        $this->buildBoxList($bit, $this->boxTree, null);
+        return $bit->output();
+    }
+    function buildBoxList($bit, $boxList, $parentType) {
+        list($baseOffset, $dummy) = $bit->getOffset();
+        foreach ($boxList as $box) {
+            $this->buildBox($bit, $box);
+        }
+        list($nextOffset, $dummy) = $bit->getOffset();
+        return $nextOffset - $baseOffset;
+    }
+    function buildBox($bit, $box) {
+        list($baseOffset, $dummy) = $bit->getOffset();
+        $bit->putUI32BE(0); // length field.
+        $type = $box["type"];
+        $bit->putData($type);
+        //
+        if (isset($box["boxList"])) {
+            $dataOffset = $box["_offset"];
+            $dataLength = $box["_length"];
+            $data = substr($this->_heifdata, $dataOffset + 8, $dataLength - 8);
+            $bit->putData($data);
+            // $dataLength = $this->buildBoxList($bit, $box["boxList"], $type);
+        } else {
+            $dataOffset = $box["_offset"];
+            $dataLength = $box["_length"];
+            $data = substr($this->_heifdata, $dataOffset + 8, $dataLength - 8);
+            $bit->putData($data);
+        }
+        $bit->setUI32BE($dataLength, $baseOffset);
     }
 }
