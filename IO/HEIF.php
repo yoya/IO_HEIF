@@ -80,7 +80,7 @@ class IO_HEIF {
         $type = $bit->getData(4);
         $box = ["type" => $type, "_offset" => $baseOffset, "_length" => $len];
         if ($bit->hasNextData($len - 8) === false) {
-            throw new Exception("parseBox: hasNext(len:$len - 8) === false");
+            throw new Exception("parseBox: hasNext(len:$len - 8) === false (baseOffset:$baseOffset)");
         }
         $nextOffset = $baseOffset + $len;
         $dataLen = $len - 8; // 8 = len(4) + type(4)
