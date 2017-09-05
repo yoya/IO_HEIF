@@ -560,29 +560,67 @@ class IO_HEIF {
     function buildBoxList($bit, $boxList, $parentType) {
         list($baseOffset, $dummy) = $bit->getOffset();
         foreach ($boxList as $box) {
-            $this->buildBox($bit, $box);
+            $this->buildBox($bit, $box, $parentType);
         }
         list($nextOffset, $dummy) = $bit->getOffset();
         return $nextOffset - $baseOffset;
     }
-    function buildBox($bit, $box) {
+    function buildBox($bit, $box, $parentType) {
         list($baseOffset, $dummy) = $bit->getOffset();
         $bit->putUI32BE(0); // length field.
         $type = $box["type"];
         $bit->putData($type);
         //
+        $boxOffset = $box["_offset"];
+        $boxLength = $box["_length"];
+        $dataOffset = $boxOffset + 8;
+        $dataLength = $boxLength - 8;
         if (isset($box["boxList"])) {
-            $dataOffset = $box["_offset"];
-            $dataLength = $box["_length"];
-            $data = substr($this->_heifdata, $dataOffset + 8, $dataLength - 8);
-            $bit->putData($data);
-            // $dataLength = $this->buildBoxList($bit, $box["boxList"], $type);
+            switch ($type) {
+            case "iref":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"] , 8 * 3);
+                $dataLength = 4;
+                break;
+            case "iinf":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"] , 8 * 3);
+                $count = $box["count"];
+                if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
+                    $bit->putUI16BE($count);
+                    $dataLength = 6;
+                } else {
+                    $bit->putUI32BE($count);
+                    $dataLength = 8;
+                }
+                break;
+            case "moov": // Movie Atoms
+            case "trak":
+            case "mdia":
+            case "meta": // Metadata
+            case "iprp": // item properties
+            case "ipco": // item property container
+                if ($type === "meta") {
+                    $bit->putUI8($box["version"]);
+                    $bit->putUIBits($box["flags"] , 8 * 3);
+                    $dataLength = 4;
+                } else {
+                    $dataLength = 0;
+                }
+                break;
+            default:
+                throw new Exception("buildBox: with BoxList type:$type not implemented yet. (baseOffset:$baseOffset)");
+                break;
+            }
+            $dataLength += $this->buildBoxList($bit, $box["boxList"], $type);
         } else {
-            $dataOffset = $box["_offset"];
-            $dataLength = $box["_length"];
-            $data = substr($this->_heifdata, $dataOffset + 8, $dataLength - 8);
-            $bit->putData($data);
+            switch ($type) {
+            default:
+                $data = substr($this->_heifdata, $dataOffset, $dataLength);
+                $bit->putData($data);
+                break;
+            }
         }
-        $bit->setUI32BE($dataLength, $baseOffset);
+        $bit->setUI32BE($boxLength, $baseOffset);
     }
 }
