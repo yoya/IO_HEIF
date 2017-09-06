@@ -48,11 +48,11 @@ class IO_HEIF {
     var $_heifdata = null;
     var $boxTree = [];
     var $ilocOffsetTable = []; // ItemId => offset
-    function parse($heifdata) {
+    function parse($heifdata, $opts = array()) {
         $bit = new IO_Bit();
         $bit->input($heifdata);
         $this->_heifdata = $heifdata;
-        $this->boxTree = $this->parseBoxList($bit, strlen($heifdata), null);
+        $this->boxTree = $this->parseBoxList($bit, strlen($heifdata), null, $opts);
         // offset linking iloc=baseOffset <=> mdat
         foreach ($this->boxTree as &$box) {
             if ($box["type"] !== "mdat") {
@@ -68,7 +68,7 @@ class IO_HEIF {
         }
         unset($box);
     }
-    function parseBoxList($bit, $length, $parentType) {
+    function parseBoxList($bit, $length, $parentType, $opts) {
         // echo "parseBoxList(".strlen($data).")\n";
         $boxList = [];
         list($baseOffset, $dummy) = $bit->getOffset();
@@ -76,7 +76,7 @@ class IO_HEIF {
             try {
                 $type = str_split($bit->getData(8), 4)[1];
                 $bit->incrementOffset(-8, 0);
-                $box = $this->parseBox($bit, $parentType);
+                $box = $this->parseBox($bit, $parentType, $opts);
             } catch (Exception $e) {
                 fwrite(STDERR, "ERROR type:$type".PHP_EOL);
                 throw $e;
@@ -86,7 +86,7 @@ class IO_HEIF {
         return $boxList;
     }
     
-    function parseBox($bit, $parentType) {
+    function parseBox($bit, $parentType, $opts) {
         list($baseOffset, $dummy) = $bit->getOffset();
         $len = $bit->getUI32BE();
         if ($len < 8) {
@@ -94,6 +94,9 @@ class IO_HEIF {
         }
         $type = $bit->getData(4);
         $box = ["type" => $type, "_offset" => $baseOffset, "_length" => $len];
+        if (! empty($opts["debug"])) {
+            fwrite(STDERR, "DEBUG: parseBox: type:$type offset:$baseOffset len:$len\n");
+        }
         if ($bit->hasNextData($len - 8) === false) {
             throw new Exception("parseBox: hasNext(len:$len - 8) === false (baseOffset:$baseOffset)");
         }
@@ -296,7 +299,7 @@ class IO_HEIF {
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
             $dataLen -= 4;
-            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type);
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type, $opts);
             break;
         case "thmb":
             $box["fromItemID"] = $bit->getUI16BE();
@@ -344,7 +347,7 @@ class IO_HEIF {
                 $box["count"] = $bit->getUI32BE();
                 $dataLen -= 8;
             }
-            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type);
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type, $opts);
             break;
         case "infe":
             $box["version"] = $bit->getUI8();
@@ -382,14 +385,14 @@ class IO_HEIF {
                 $box["flags"] = $bit->getUIBits(8 * 3);
                 $dataLen -= 4;
             }
-            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type);
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type, $opts);
             break;
         default:
         }
         $bit->setOffset($nextOffset, 0);
         return $box;
     }
-    function dump($opts = Array()) {
+    function dump($opts = array()) {
         $opts["indent"] = 0;
         $this->dumpBoxList($this->boxTree, $opts);
     }
@@ -568,20 +571,34 @@ class IO_HEIF {
             }
         }
     }
+    function removeBoxByType($removeTypeList) {
+        $this->removeBoxByType_r($this->boxTree, $removeTypeList);
+        // update baseOffset in iloc Box
+    }
+    function removeBoxByType_r(&$boxList, $removeTypeList) {
+        foreach ($boxList as $idx => &$box) {
+            if (in_array($box["type"], $removeTypeList)) {
+                unset($boxList[$idx]);
+            } else if (isset($box["boxList"])) {
+                $this->removeBoxByType_r($box["boxList"], $removeTypeList);
+            }
+        }
+        unset($box);
+    }
     function build($opts = array()) {
         $bit = new IO_Bit();
-        $this->buildBoxList($bit, $this->boxTree, null);
+        $this->buildBoxList($bit, $this->boxTree, null, $opts);
         return $bit->output();
     }
-    function buildBoxList($bit, $boxList, $parentType) {
+    function buildBoxList($bit, $boxList, $parentType, $opts) {
         list($baseOffset, $dummy) = $bit->getOffset();
         foreach ($boxList as $box) {
-            $this->buildBox($bit, $box, $parentType);
+            $this->buildBox($bit, $box, $parentType, $opts);
         }
         list($nextOffset, $dummy) = $bit->getOffset();
         return $nextOffset - $baseOffset;
     }
-    function buildBox($bit, $box, $parentType) {
+    function buildBox($bit, $box, $parentType, $opts) {
         list($baseOffset, $dummy) = $bit->getOffset();
         $bit->putUI32BE(0); // length field.
         $type = $box["type"];
@@ -591,6 +608,9 @@ class IO_HEIF {
         $boxLength = $box["_length"];
         $dataOffset = $boxOffset + 8;
         $dataLength = $boxLength - 8;
+        if (! empty($opts["debug"])) {
+            fwrite(STDERR, "DEBUG: buildBox: type:$type offset:$boxOffset len:$boxLength\n");
+        }
         if (isset($box["boxList"])) {
             switch ($type) {
             case "iref":
@@ -628,7 +648,7 @@ class IO_HEIF {
                 throw new Exception("buildBox: with BoxList type:$type not implemented yet. (baseOffset:$baseOffset)");
                 break;
             }
-            $dataLength += $this->buildBoxList($bit, $box["boxList"], $type);
+            $dataLength += $this->buildBoxList($bit, $box["boxList"], $type, $opts);
         } else {
             switch ($type) {
             default:
