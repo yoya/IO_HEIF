@@ -60,9 +60,9 @@ class IO_HEIF {
             }
             $mdatStart = $box["_offset"];
             $mdatNext = $mdatStart + $box["_length"];
-            foreach ($this->ilocOffsetTable as $itemId => $offset) {
+            foreach ($this->ilocOffsetTable as $itemID => $offset) {
                 if (($mdatStart <= $offset) && ($offset < $mdatNext)) {
-                    $box["_ilocRefOffsetRelative"] = $offset - $mdatStart;
+                    $box["_ilocRefOffsetRelative"][$itemID] = $offset - $mdatStart;
                 }
             }
         }
