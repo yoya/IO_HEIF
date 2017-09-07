@@ -49,6 +49,7 @@ class IO_HEIF {
     var $boxTree = [];
     var $ilocOffsetTable = []; // ItemId => offset
     function parse($heifdata, $opts = array()) {
+        $opts["indent"] = 0;
         $bit = new IO_Bit();
         $bit->input($heifdata);
         $this->_heifdata = $heifdata;
@@ -71,6 +72,7 @@ class IO_HEIF {
     function parseBoxList($bit, $length, $parentType, $opts) {
         // echo "parseBoxList(".strlen($data).")\n";
         $boxList = [];
+        $opts["indent"] = $opts["indent"] + 1;
         list($baseOffset, $dummy) = $bit->getOffset();
         while ($bit->hasNextData(8) && ($bit->getOffset()[0] < ($baseOffset + $length))) {
             try {
@@ -88,6 +90,7 @@ class IO_HEIF {
     
     function parseBox($bit, $parentType, $opts) {
         list($baseOffset, $dummy) = $bit->getOffset();
+        $indentSpace = str_repeat(" ", ($opts["indent"]-1) * 4);
         $len = $bit->getUI32BE();
         if ($len < 8) {
             throw new Exception("parseBox: len($len) < 8");
@@ -95,7 +98,7 @@ class IO_HEIF {
         $type = $bit->getData(4);
         $box = ["type" => $type, "_offset" => $baseOffset, "_length" => $len];
         if (! empty($opts["debug"])) {
-            fwrite(STDERR, "DEBUG: parseBox: type:$type offset:$baseOffset len:$len\n");
+            fwrite(STDERR, "DEBUG: parseBox:$indentSpace type:$type offset:$baseOffset len:$len\n");
         }
         if ($bit->hasNextData($len - 8) === false) {
             throw new Exception("parseBox: hasNext(len:$len - 8) === false (baseOffset:$baseOffset)");
