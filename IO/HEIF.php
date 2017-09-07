@@ -576,18 +576,18 @@ class IO_HEIF {
         }
     }
     function removeBoxByType($removeTypeList) {
-        $this->removeBoxByType_r($this->boxTree, $removeTypeList);
+        $this->boxTree = $this->removeBoxByType_r($this->boxTree, $removeTypeList);
         // update baseOffset in iloc Box
     }
-    function removeBoxByType_r(&$boxList, $removeTypeList) {
-        foreach ($boxList as $idx => &$box) {
+    function removeBoxByType_r($boxList, $removeTypeList) {
+        foreach ($boxList as $idx => $box) {
             if (in_array($box["type"], $removeTypeList)) {
                 unset($boxList[$idx]);
             } else if (isset($box["boxList"])) {
-                $this->removeBoxByType_r($box["boxList"], $removeTypeList);
+                $boxList[$idx]["boxList"] = $this->removeBoxByType_r($box["boxList"], $removeTypeList);
             }
         }
-        unset($box);
+        return array_values($boxList);
     }
     function build($opts = array()) {
         $bit = new IO_Bit();
