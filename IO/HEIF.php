@@ -391,6 +391,7 @@ class IO_HEIF {
             $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type, $opts);
             break;
         default:
+            break;
         }
         $bit->setOffset($nextOffset, 0);
         return $box;
