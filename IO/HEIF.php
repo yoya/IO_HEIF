@@ -657,6 +657,6 @@ class IO_HEIF {
                 break;
             }
         }
-        $bit->setUI32BE($boxLength, $baseOffset);
+        $bit->setUI32BE(8 + $dataLength, $baseOffset);
     }
 }
