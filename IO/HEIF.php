@@ -73,8 +73,8 @@ class IO_HEIF {
         // echo "parseBoxList(".strlen($data).")\n";
         $boxList = [];
         $opts["indent"] = $opts["indent"] + 1;
-        list($baseOffset, $dummy) = $bit->getOffset();
-        while ($bit->hasNextData(8) && ($bit->getOffset()[0] < ($baseOffset + $length))) {
+        list($boxOffset, $dummy) = $bit->getOffset();
+        while ($bit->hasNextData(8) && ($bit->getOffset()[0] < ($boxOffset + $length))) {
             try {
                 $type = str_split($bit->getData(8), 4)[1];
                 $bit->incrementOffset(-8, 0);
@@ -89,21 +89,21 @@ class IO_HEIF {
     }
     
     function parseBox($bit, $parentType, $opts) {
-        list($baseOffset, $dummy) = $bit->getOffset();
+        list($boxOffset, $dummy) = $bit->getOffset();
         $indentSpace = str_repeat(" ", ($opts["indent"]-1) * 4);
         $len = $bit->getUI32BE();
         if ($len < 8) {
             throw new Exception("parseBox: len($len) < 8");
         }
         $type = $bit->getData(4);
-        $box = ["type" => $type, "_offset" => $baseOffset, "_length" => $len];
+        $box = ["type" => $type, "_offset" => $boxOffset, "_length" => $len];
         if (! empty($opts["debug"])) {
-            fwrite(STDERR, "DEBUG: parseBox:$indentSpace type:$type offset:$baseOffset len:$len\n");
+            fwrite(STDERR, "DEBUG: parseBox:$indentSpace type:$type offset:$boxOffset len:$len\n");
         }
         if ($bit->hasNextData($len - 8) === false) {
-            throw new Exception("parseBox: hasNext(len:$len - 8) === false (baseOffset:$baseOffset)");
+            throw new Exception("parseBox: hasNext(len:$len - 8) === false (boxOffset:$boxOffset)");
         }
-        $nextOffset = $baseOffset + $len;
+        $nextOffset = $boxOffset + $len;
         $dataLen = $len - 8; // 8 = len(4) + type(4)
         switch($type) {
         case "ftyp":
@@ -366,10 +366,10 @@ class IO_HEIF {
             $box["contentType"] = null;
             $box["contentEncoding"] = null;
             list($offset, $dummy) = $bit->getOffset();
-            if (($offset - $baseOffset) < $dataLen) {
+            if (($offset - $boxOffset) < $dataLen) {
                 $box["contentType"] = $bit->getDataUntil("\0");
                 list($offset, $dummy) = $bit->getOffset();
-                if (($offset - $baseOffset) < $dataLen) {
+                if (($offset - $boxOffset) < $dataLen) {
                     $box["contentEncoding"] = $bit->getDataUntil("\0");
                 }
             }
@@ -595,15 +595,15 @@ class IO_HEIF {
         return $bit->output();
     }
     function buildBoxList($bit, $boxList, $parentType, $opts) {
-        list($baseOffset, $dummy) = $bit->getOffset();
+        list($boxOffset, $dummy) = $bit->getOffset();
         foreach ($boxList as $box) {
             $this->buildBox($bit, $box, $parentType, $opts);
         }
         list($nextOffset, $dummy) = $bit->getOffset();
-        return $nextOffset - $baseOffset;
+        return $nextOffset - $boxOffset;
     }
     function buildBox($bit, $box, $parentType, $opts) {
-        list($baseOffset, $dummy) = $bit->getOffset();
+        list($boxOffset, $dummy) = $bit->getOffset();
         $bit->putUI32BE(0); // length field.
         $type = $box["type"];
         $bit->putData($type);
@@ -649,7 +649,7 @@ class IO_HEIF {
                 }
                 break;
             default:
-                throw new Exception("buildBox: with BoxList type:$type not implemented yet. (baseOffset:$baseOffset)");
+                throw new Exception("buildBox: with BoxList type:$type not implemented yet. (boxOffset:$boxOffset)");
                 break;
             }
             $dataLength += $this->buildBoxList($bit, $box["boxList"], $type, $opts);
@@ -661,6 +661,6 @@ class IO_HEIF {
                 break;
             }
         }
-        $bit->setUI32BE(8 + $dataLength, $baseOffset);
+        $bit->setUI32BE(8 + $dataLength, $boxOffset);
     }
 }
