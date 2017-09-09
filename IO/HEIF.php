@@ -93,15 +93,15 @@ class IO_HEIF {
         $indentSpace = str_repeat(" ", ($opts["indent"]-1) * 4);
         $boxLength = $bit->getUI32BE();
         if ($boxLength < 8) {
-            throw new Exception("parseBox: len($boxLength) < 8");
+            throw new Exception("parseBox: boxLength($boxLength) < 8");
         }
         $type = $bit->getData(4);
         $box = ["type" => $type, "_offset" => $boxOffset, "_length" => $boxLength];
         if (! empty($opts["debug"])) {
-            fwrite(STDERR, "DEBUG: parseBox:$indentSpace type:$type offset:$boxOffset len:$boxLength\n");
+            fwrite(STDERR, "DEBUG: parseBox:$indentSpace type:$type offset:$boxOffset boxLength:$boxLength\n");
         }
         if ($bit->hasNextData($boxLength - 8) === false) {
-            throw new Exception("parseBox: hasNext(len:$boxLength - 8) === false (boxOffset:$boxOffset)");
+            throw new Exception("parseBox: hasNext(boxLength:$boxLength - 8) === false (boxOffset:$boxOffset)");
         }
         $nextOffset = $boxOffset + $boxLength;
         $dataLen = $boxLength - 8; // 8 = len(4) + type(4)
@@ -608,12 +608,12 @@ class IO_HEIF {
         $type = $box["type"];
         $bit->putData($type);
         //
-        $boxOffset = $box["_offset"];
-        $boxLength = $box["_length"];
-        $dataOffset = $boxOffset + 8;
-        $dataLength = $boxLength - 8;
+        $origOffset = $box["_offset"];
+        $origLength = $box["_length"];
+        $origDataOffset = $origOffset + 8;
+        $origDataLength = $origLength - 8;
         if (! empty($opts["debug"])) {
-            fwrite(STDERR, "DEBUG: buildBox: type:$type offset:$boxOffset len:$boxLength\n");
+            fwrite(STDERR, "DEBUG: buildBox: type:$type boxOffset:$boxOffset origOffset:$origOffset origLength:$origLength\n");
         }
         if (isset($box["boxList"])) {
             switch ($type) {
@@ -656,11 +656,13 @@ class IO_HEIF {
         } else {
             switch ($type) {
             default:
-                $data = substr($this->_heifdata, $dataOffset, $dataLength);
+                $data = substr($this->_heifdata, $origDataOffset, $origDataLength);
                 $bit->putData($data);
+                $dataLength = $origDataLength;
                 break;
             }
         }
-        $bit->setUI32BE(8 + $dataLength, $boxOffset);
+        $boxLength = 8 + $dataLength;
+        $bit->setUI32BE($boxLength, $boxOffset);
     }
 }
