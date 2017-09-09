@@ -91,20 +91,20 @@ class IO_HEIF {
     function parseBox($bit, $parentType, $opts) {
         list($boxOffset, $dummy) = $bit->getOffset();
         $indentSpace = str_repeat(" ", ($opts["indent"]-1) * 4);
-        $len = $bit->getUI32BE();
-        if ($len < 8) {
-            throw new Exception("parseBox: len($len) < 8");
+        $boxLength = $bit->getUI32BE();
+        if ($boxLength < 8) {
+            throw new Exception("parseBox: len($boxLength) < 8");
         }
         $type = $bit->getData(4);
-        $box = ["type" => $type, "_offset" => $boxOffset, "_length" => $len];
+        $box = ["type" => $type, "_offset" => $boxOffset, "_length" => $boxLength];
         if (! empty($opts["debug"])) {
-            fwrite(STDERR, "DEBUG: parseBox:$indentSpace type:$type offset:$boxOffset len:$len\n");
+            fwrite(STDERR, "DEBUG: parseBox:$indentSpace type:$type offset:$boxOffset len:$boxLength\n");
         }
-        if ($bit->hasNextData($len - 8) === false) {
-            throw new Exception("parseBox: hasNext(len:$len - 8) === false (boxOffset:$boxOffset)");
+        if ($bit->hasNextData($boxLength - 8) === false) {
+            throw new Exception("parseBox: hasNext(len:$boxLength - 8) === false (boxOffset:$boxOffset)");
         }
-        $nextOffset = $boxOffset + $len;
-        $dataLen = $len - 8; // 8 = len(4) + type(4)
+        $nextOffset = $boxOffset + $boxLength;
+        $dataLen = $boxLength - 8; // 8 = len(4) + type(4)
         switch($type) {
         case "ftyp":
             $box["major"] = $bit->getData(4);
