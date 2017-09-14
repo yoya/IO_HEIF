@@ -374,6 +374,26 @@ class IO_HEIF {
                 }
             }
             break;
+        case "auxC":
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["auxType"] = $bit->getDataUntil("\0");
+            $currOffset = $bit->getOffset()[0];
+            if ($currOffset < $nextOffset) {
+                $box["auxSubType"] = $bit->getData($nextOffset - $currOffset);
+            } else {
+                $box["auxSubType"] = null;
+            }
+            break;
+        case "auxl":
+            $box["fromItemID"] = $bit->getUI16BE();
+            $itemCount = $bit->getUI16BE();
+            $itemArray = [];
+            for ($i = 0 ; $i < $itemCount ; $i++) {
+                $itemArray[] = ["itemID" => $bit->getUI16BE()];
+            }
+            $box["itemArray"] = $itemArray;
+            break;
             /*
              * container type
              */
@@ -513,6 +533,17 @@ class IO_HEIF {
                         }
                     }
                 }
+            }
+            break;
+        case "auxC":
+            $this->printfBox($box, $indentSpace."  version:%d flags:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  auxType:%s".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  auxSubType:%s".PHP_EOL);
+            break;
+        case "auxl":
+            $this->printfBox($box, $indentSpace."  fromItemID:%d".PHP_EOL);
+            foreach ($box["itemArray"] as $item) {
+                    $this->printfBox($item, $indentSpace."    itemID:%d".PHP_EOL);
             }
             break;
         default:
