@@ -490,7 +490,10 @@ class IO_HEIF {
             echo $indentSpace."  hspace:".$box["hspace"]." vspace:".$box["vspace"].PHP_EOL;
             break;
         case "hvcC":
-            $this->printfBox($box, $indentSpace."  version:%d profileSpace:%d tierFlag:%x profileIdc:%d".PHP_EOL);
+            $profileIdc = $box["profileIdc"];
+            $profileIdcStr = ($profileIdc===1)?"Main profile":(($profileIdc===2)?"Main10 profile":"unknown profile");
+            $this->printfBox($box, $indentSpace."  version:%d profileSpace:%d tierFlag:%x profileIdc:%d");
+            echo "($profileIdcStr)".PHP_EOL;
             $this->printfBox($box, $indentSpace."  profileCompatibilityFlags:0x%x".PHP_EOL);
             $this->printfBox($box, $indentSpace."  constraintIndicatorFlags:0x%x levelIdc:%d".PHP_EOL);
             $this->printfBox($box, $indentSpace."  minSpatialSegmentationIdc:%d parallelismType:%d".PHP_EOL);
