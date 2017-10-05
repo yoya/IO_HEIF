@@ -307,7 +307,6 @@ class IO_HEIF {
                     }
                     $item["dataReferenceIndex"] = $bit->getUI16BE();
                     $item["baseOffset"] = $bit->getUIBits(8 * $baseOffsetSize);
-                    $this->ilocOffsetTable[$item["itemID"]] = $item["baseOffset"];
                     $extentCount = $bit->getUI16BE();
                     $item["extentCount"] = $extentCount;
                     $extentArray = [];
