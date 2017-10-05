@@ -47,7 +47,6 @@ class IO_HEIF {
     var $_chunkList = null;
     var $_heifdata = null;
     var $boxTree = [];
-    var $ilocOffsetTable = []; // ItemId => offset
     function parse($heifdata, $opts = array()) {
         $opts["indent"] = 0;
         $bit = new IO_Bit();
@@ -55,16 +54,45 @@ class IO_HEIF {
         $this->_heifdata = $heifdata;
         $this->boxTree = $this->parseBoxList($bit, strlen($heifdata), null, $opts);
         // offset linking iloc=baseOffset <=> mdat
-        foreach ($this->boxTree as &$box) {
-            if ($box["type"] !== "mdat") {
-                continue;
+        $this->applyFunctionToBoxTree2($this->boxTree, function(&$iloc, &$mdat) {
+            if (($iloc["type"] !== "iloc") || ($mdat["type"] !== "mdat")) {
+                return ;
             }
-            $mdatStart = $box["_offset"];
-            $mdatNext = $mdatStart + $box["_length"];
-            foreach ($this->ilocOffsetTable as $itemID => $offset) {
-                if (($mdatStart <= $offset) && ($offset < $mdatNext)) {
-                    $box["_ilocRefOffsetRelative"][$itemID] = $offset - $mdatStart;
+            foreach ($iloc["itemArray"] as &$item) {
+                $itemID = $item["itemID"];
+                if (isset($item["baseOffset"])) {
+                    $offset = $item["baseOffset"];
+                    $mdatStart = $mdat["_offset"];
+                    $mdatNext = $mdatStart + $mdat["_length"];
+                    if (($mdatStart <= $offset) && ($offset < $mdatNext)) {
+                        $mdatId = mt_rand();
+                        $item["_mdatId"] = $mdatId;
+                        $mdat["_mdatId"] = $mdatId;
+                        $offsetRelative = $offset - $mdatStart;
+                        $item["_offsetRelative"] = $offsetRelative;
+                        $mdat["_offsetRelative"] = $offsetRelative;
+                        $mdat["_itemID"] = $itemID;
+                    }
                 }
+            }
+            unset($item);
+        });
+    }
+    //
+    function applyFunctionToBoxTree(&$boxTree, $callback, &$userdata) {
+        foreach ($boxTree as &$box) {
+            $callback($box, $userdata);
+            if (isset($box["boxList"])) {
+                $this->applyFunctionToBoxTree($box["boxList"], $callback, $userdata);
+            }
+        }
+        unset($box);
+    }
+    function applyFunctionToBoxTree2(&$boxTree, $callback) {
+        foreach ($boxTree as &$box) {
+            $this->applyFunctionToBoxTree($boxTree, $callback, $box);
+            if (isset($box["boxList"])) {
+                $this->applyFunctionToBoxTree2($box["boxList"], $callback);
             }
         }
         unset($box);
