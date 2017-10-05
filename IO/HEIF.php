@@ -717,12 +717,58 @@ class IO_HEIF {
             $dataLength += $this->buildBoxList($bit, $box["boxList"], $type, $opts);
         } else {
             switch ($type) {
+            case "iloc":
+                if ($parentType === "iref") {
+                    $bit->putUI16BE($box["itemID"]);
+                    $itemCount = count($box["itemArray"]);
+                    $bit->putUI16BE($itemCount);
+                    foreach ($box["itemArray"] as $item) {
+                        $bit->putUI16BE(item["itemID"]);
+                    }
+                } else {
+                    $bit->putUI8($box["version"]);
+                    $bit->putUIBits($box["flags"], 8 * 3);
+                    $offsetSize = $box["offsetSize"];
+                    $lengthSize = $box["lengthSize"];
+                    $bit->putUIBits($offsetSize, 4);
+                    $bit->putUIBits($lengthSize, 4);
+                    $baseOffsetSize = $box["baseOffsetSize"]; // XXX
+                    $bit->putUIBits($baseOffsetSize, 4);
+                    if ($box["version"] === 0) {
+                        $bit->putUIBits($box["reserved"], 4);
+                    } else {
+                        $indexSize = $box["indexSize"];
+                        $bit->putUIBits($indexSize, 4);
+                    }
+                    $itemCount = count($box["itemArray"]);
+                    $bit->putUI16BE($itemCount);
+                    foreach ($box["itemArray"] as $item) {
+                        $bit->putUI16BE($item["itemID"]);
+                        if ($box["version"] >= 1) {
+                            $bit->putUI16BE($item["constructionMethod"]);
+                        }
+                        $bit->putUI16BE($item["dataReferenceIndex"]);
+                        list($fieldOffset, $dummy) = $bit->getOffset();
+                        $bit->putUIBits($item["baseOffset"], 8 * $baseOffsetSize);
+                        $extentCount = count($item["extentArray"]);
+                        $bit->putUI16BE($extentCount);
+                        foreach ($item["extentArray"] as $extent) {
+                            $bit->putUIBits($extent["extentOffset"], 8 * $offsetSize);
+                            if ($box["version"] >= 1) {
+                                $bit->putUIBits($extent["extentIndex"], 8 * $indexSize);
+                            }
+                            $bit->putUIBits($extent["extentLength"] , 8 * $lengthSize);
+                        }
+                    }
+                }
+                break;
             default:
                 $data = substr($this->_heifdata, $origDataOffset, $origDataLength);
                 $bit->putData($data);
-                $dataLength = $origDataLength;
                 break;
             }
+            list($currentOffset, $dummy) = $bit->getOffset();
+            $dataLength = $currentOffset - ($boxOffset + 8);
         }
         $boxLength = 8 + $dataLength;
         $bit->setUI32BE($boxLength, $boxOffset);
