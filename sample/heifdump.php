@@ -4,7 +4,7 @@ require_once('IO/HEIF.php');
 
 $options = getopt("f:hvtd");
 
-if ((isset($options['f']) === false) || (is_readable($options['f']) === false)) {
+if ((isset($options['f']) === false) || (($options['f'] !== "-") && is_readable($options['f']) === false)) {
     fprintf(STDERR, "Usage: php heifdump.php -f <heif_file> [-htvd]\n");
     fprintf(STDERR, "ex) php heifdump.php -f test.heic -h \n");
     fprintf(STDERR, "ex) php heifdump.php -f test.heic -t \n");
@@ -12,6 +12,9 @@ if ((isset($options['f']) === false) || (is_readable($options['f']) === false)) 
 }
 
 $filename = $options['f'];
+if ($filename === "-") {
+    $filename = "php://stdin";
+}
 $heifdata = file_get_contents($filename);
 
 $opts = array();
