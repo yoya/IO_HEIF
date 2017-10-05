@@ -651,8 +651,40 @@ class IO_HEIF {
         return array_values($boxList);
     }
     function build($opts = array()) {
+        // for iloc => mdat linkage
+        $this->ilocBaseOffsetFieldList = []; // _mdatId, _offsetRelative, fieldOffset, fieldSize
+        $this->mdatOffsetList = []; // _mdatId, _offset
+        //
+
         $bit = new IO_Bit();
         $this->buildBoxList($bit, $this->boxTree, null, $opts);
+        //
+        foreach ($this->ilocBaseOffsetFieldList as $ilocBOField) {
+            $_mdatId = $ilocBOField["_mdatId"];
+            foreach ($this->mdatOffsetList as $mdatOffset) {
+                if ($_mdatId === $mdatOffset["_mdatId"]) {
+                    $_offsetRelative = $ilocBOField["_offsetRelative"];
+                    $fieldOffset = $ilocBOField["fieldOffset"];
+                    $baseOffsetSize = $ilocBOField["baseOffsetSize"];
+                    $newOffset = $mdatOffset["_offset"] + $_offsetRelative;
+                    // XXXn
+                    switch ($baseOffsetSize) {
+                    case 1:
+                        $bit->setUI8($newOffset, $fieldOffset);
+                        break;
+                    case 2:
+                        $bit->setUI16BE($newOffset, $fieldOffset);
+                        break;
+                    case 4:
+                        $bit->setUI32BE($newOffset, $fieldOffset);
+                        break;
+                    default:
+                        new Exception("baseOffsetSize:$baseOffsetSize not implement yet.");
+                    }
+                    break;
+                }
+            }
+        }
         return $bit->output();
     }
     function buildBoxList($bit, $boxList, $parentType, $opts) {
@@ -758,10 +790,23 @@ class IO_HEIF {
                             }
                             $bit->putUIBits($extent["extentLength"] , 8 * $lengthSize);
                         }
+                        $this->ilocBaseOffsetFieldList []= [
+                            "_mdatId" => $item["_mdatId"],
+                            "_offsetRelative" => $item["_offsetRelative"],
+                            "fieldOffset" => $fieldOffset,
+                            "baseOffsetSize" => $baseOffsetSize,
+                        ];
                     }
                 }
                 break;
             default:
+                if ($type === "mdat") {
+                    // _mdatId, _offset
+                    $this->mdatOffsetList []= [
+                        "_mdatId" => $box["_mdatId"],
+                        "_offset" => $box["_offset"],
+                    ];
+                }
                 $data = substr($this->_heifdata, $origDataOffset, $origDataLength);
                 $bit->putData($data);
                 break;
