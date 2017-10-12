@@ -7,6 +7,7 @@
  */
 
 require_once 'IO/Bit.php';
+require_once dirname(__FILE__).'/HEIF/HEVC.php';
 
 function getTypeDescription($type) {
     // http://mp4ra.org/atoms.html
@@ -816,5 +817,63 @@ class IO_HEIF {
         }
         $boxLength = 8 + $dataLength;
         $bit->setUI32BE($boxLength, $boxOffset);
+    }
+    function fromHEVC($hevcdata, $opts = array()) {
+        $itemID = 1;
+        //
+        $hevc = new IO_HEIF_HEVC();
+        $hevc->input($hevcdata);
+        $ftyp = ["type" => "ftyp",
+                 "major" => "mif1", "alt" => ["mif1", "heic"] ];
+        $mdat = ["type" => "mdat", "data" => $hevc->getMDATdata(),
+                 "_mdatId" => $itemID, "_offsetRelative" => 0 ];
+        $hdlr = ["type" => "hdlr", "version" => 0, "flags" => 0,
+                 "conponentType" => "\0\0\0\0",
+                 "conponentSubType" => "pict",
+                 "conponentManufacturer" => "\0\0\0\0",
+                 "conponentFlags" => 0, "conponentFlagsMask" => 0,
+                 "conponentName" => "IO_HEIF pict Handler\0" ];
+        $iloc = ["type" => "iloc",  "version" => 0, "flags" => 0,
+                 "offsetSize" => 0, "lengthSize" => 4, "baseOffsetSize" => 4,
+                 "itemArray" => [
+                     ["itemID" => 1, "dataReferenceIndex" => 0,
+                      "baseOffset" => 0,
+                      "extentArray" => [
+                          [ "extentOffset" => 0,
+                            "extentLength" => strlen($mdatData) ]
+                      ],
+                      "_mdatId" => $itemID, "_offsetRelative" => 0
+                     ],
+                 ]];
+        $iinf = ["type" => "iinf", "version" => 0, "flags" => 0,
+                 "boxList" => [
+                     ["type" => "infe", "version" => 2, "flags" => 0,
+                      "itemID" => $itemID,
+                      "itemProtectionIndex" => 0,
+                      "itemName" => "Image",
+                      "contentType" => "contentEncoding"]
+                 ]];
+        $ispe = $hevc->getISPE();
+        $pasp = $hevc->getPASP();
+        $hvcC = $hevc->getHEVCConfig();
+        $ipma = ["type" => "ipma",
+                 "version" => 0, "flags" => 0,
+                 "entryArray" => [
+                     ["itemID" => 1,
+                      "associationCArray" => [
+                          ["essential" => 0, "propertyIndex" => 1],
+                          ["essential" => 0,  "propertyIndex" => 2],
+                          ["essential" => 1,  "propertyIndex" => 3]
+                      ]]
+                 ]];
+        $iprp = ["type" => "iprp",
+                 "boxList" => [
+                     ["type" => "ipco", "boxList" =>
+                      ["boxList" => [$ispe, $pasp, $hvcC, $ipma]
+                      ]]
+                 ]];
+        $meta = ["type" => "meta", "version" => 0, "flags" => 0,
+                 "boxList" => [$hdlr, $iloc, $iinf, $iprp] ];
+        $this->boxTree = [$ftyp, $mdat, $meta];
     }
 }
