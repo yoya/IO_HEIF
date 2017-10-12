@@ -26,7 +26,7 @@ class IO_HEIF_HEVC {
     }
     function getPASP() {
         return ["type" => "pasp",
-                "hspace" => 1, "hspace" => 1]; // XXX
+                "hspace" => 1, "vspace" => 1]; // XXX
     }
     function getHEVCConfig() {
         $sps = $this->hevc->getNALByType(33); // SPS_NUT
@@ -36,22 +36,25 @@ class IO_HEIF_HEVC {
         $sps_unit = $sps->unit;
         $profile_tier_level = $sps_unit->profile_tier_level;
         $profileCompatibilityFlagsBit = new IO_Bit();
+        $profileCompatibilityFlags = 0;
         foreach ($profile_tier_level->general_profile_compatibility_flag as $flag) {
-            $profileCompatibilityFlagsBit->putUIBit($flag);
+            $profileCompatibilityFlags <<= 1;
+            $profileCompatibilityFlags |= $flag;
         }
+
         return ["type" => "hvcC",
                 "version" => 1,
-                "profileSpace" => 0, // $profile_tier_level->general_profile_space
-                "tierFlag" => 0, // $profile_tier_level->general_tier_flag
-                "profileIdc" => 1,  // $profile_tier_level->general_profile_idc
-                "profileCompatibilityFlags" => "\x60000000", // $profileCompatibilityFlagsBit->output(),
+                "profileSpace" => $profile_tier_level->general_profile_space,
+                "tierFlag" => $profile_tier_level->general_tier_flag,
+                "profileIdc" => $profile_tier_level->general_profile_idc,
+                "profileCompatibilityFlags" => $profileCompatibilityFlags,
                 "constraintIndicatorFlags" => "\x900000000000",
-                "levelIdc" => 90, // $profile_tier_level->general_level_idc
+                "levelIdc" => $profile_tier_level->general_level_idc,
                 "minSpatialSegmentationIdc" => 0,
                 "parallelismType" => 3,
-                "chromaFormat" => 1, // $sps_unit->chroma_format_idc
-                "bitDepthLumaMinus8" => 0, // $sps_unit->bit_depth_luma_minus8
-                "bitDepthChromaMinus8" => 0, // $sps_unit->bit_depth_chroma_minus8
+                "chromaFormat" => $sps_unit->chroma_format_idc,
+                "bitDepthLumaMinus8" => $sps_unit->bit_depth_luma_minus8,
+                "bitDepthChromaMinus8" => $sps_unit->bit_depth_chroma_minus8,
                 "avgFrameRate" => 0,
                 "constantFrameRate" => 0,
                 "numTemporalLayers" => 1,
@@ -59,11 +62,14 @@ class IO_HEIF_HEVC {
                 "lengthSizeMinusOne" => 3,
                 "nalArrays" => [
                     [ "array_completeness" => 1,
-                      "NALUnitType" => 32, "nalus" => [$vpsData] ],
+                      "NALUnitType" => 32,
+                      "nalus" => [["nalUnit" => $vpsData]] ],
                     [ "array_completeness" => 1,
-                      "NALUnitType" => 33, "nalus" => [$spsData] ],
+                      "NALUnitType" => 33,
+                      "nalus" => [["nalUnit" => $spsData]] ],
                     [ "array_completeness" => 1,
-                      "NALUnitType" => 34, "nalus" => [$ppsData] ],
+                      "NALUnitType" => 34,
+                      "nalus" => [["nalUnit" => $ppsData]] ],
                 ],
         ];
     }
