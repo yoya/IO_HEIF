@@ -501,9 +501,11 @@ class IO_HEIF {
             break;
         case "ipma":
             $this->printfBox($box, $indentSpace."  version:%d flags:%d".PHP_EOL);
+            $box["entryCount"] = count($box["entryArray"]);
             $this->printfBox($box, $indentSpace."  entryCount:%d".PHP_EOL);
             foreach ($box["entryArray"] as $entry) {
                 $this->printfBox($entry, $indentSpace."    itemID:%d".PHP_EOL);
+                $entry["associationCount"]  = count($entry["associationArray"] );
                 $this->printfBox($entry, $indentSpace."    associationCount:%d".PHP_EOL);
                 foreach ($entry["associationArray"] as $assoc) {
                     $this->printfBox($assoc, $indentSpace."      essential:%d propertyIndex:%d".PHP_EOL);
@@ -531,6 +533,7 @@ class IO_HEIF {
             foreach ($box["nalArrays"] as $nal) {
                 $this->printfBox($nal, $indentSpace."    array_completeness:%d NALUnitType:%d".PHP_EOL);
                 foreach ($nal["nalus"] as $nalu) {
+                    $nalu["nalUnitLength"] = strlen($nalu["nalUnit"]);
                     $this->printfBox($nalu, $indentSpace."      nalUnitLength:%d nalUnit:%h".PHP_EOL);
                 }
             }
@@ -538,6 +541,7 @@ class IO_HEIF {
         case "iloc":
             if (isset($box["version"]) === false) {
                 $this->printfBox($box, $indentSpace."  itemID:%d".PHP_EOL);
+                $box["itemCount"] = count($box["itemArray"]);
                 $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
                 foreach ($box["itemArray"] as $item) {
                     $this->printfBox($item, $indentSpace."    itemID:%d".PHP_EOL);
@@ -548,6 +552,7 @@ class IO_HEIF {
                 } else {
                     $this->printfBox($box, $indentSpace."  version:%d flags:%d  offsetSize:%d lengthSize:%d baseOffsetSize:%d indexSize:%d".PHP_EOL);
                 }
+                $box["itemCount"] = count($box["itemArray"]);
                 $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
                 foreach ($box["itemArray"] as $item) {
                     if  ($box["version"] === 0) {
@@ -555,6 +560,7 @@ class IO_HEIF {
                     } else {
                         $this->printfBox($item, $indentSpace."    itemID:%d constructionMethod:%d dataReferenceIndex:%d baseOffset:%d".PHP_EOL);
                     }
+                    $item["extentCount"]  = count($item["extentArray"]);
                     $this->printfBox($item, $indentSpace."    extentCount:%d".PHP_EOL);
                     foreach ($item["extentArray"] as $extent) {
                         if ($box["version"] === 0) {
