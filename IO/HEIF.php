@@ -89,6 +89,7 @@ class IO_HEIF {
         }
         unset($box);
     }
+    // combination traversal
     function applyFunctionToBoxTree2(&$boxTree, $callback) {
         foreach ($boxTree as &$box) {
             $this->applyFunctionToBoxTree($boxTree, $callback, $box);
@@ -716,6 +717,9 @@ class IO_HEIF {
             fwrite(STDERR, "DEBUG: buildBox: type:$type boxOffset:$boxOffset origOffset:$origOffset origLength:$origLength\n");
         }
         if (isset($box["boxList"])) {
+            /*
+             * container box
+             */
             switch ($type) {
             case "iref":
                 $bit->putUI8($box["version"]);
@@ -755,6 +759,9 @@ class IO_HEIF {
             }
             $dataLength += $this->buildBoxList($bit, $box["boxList"], $type, $opts);
         } else {
+            /*
+             * no container box (leaf node)
+             */
             switch ($type) {
             case "iloc":
                 if ($parentType === "iref") {
