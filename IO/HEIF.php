@@ -725,7 +725,8 @@ class IO_HEIF {
             case "iinf":
                 $bit->putUI8($box["version"]);
                 $bit->putUIBits($box["flags"] , 8 * 3);
-                $count = $box["count"];
+                // $count = $box["count"];
+                $count = count($box["boxList"]);
                 if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
                     $bit->putUI16BE($count);
                     $dataLength = 6;
@@ -773,7 +774,11 @@ class IO_HEIF {
                     $baseOffsetSize = $box["baseOffsetSize"]; // XXX
                     $bit->putUIBits($baseOffsetSize, 4);
                     if ($box["version"] === 0) {
-                        $bit->putUIBits($box["reserved"], 4);
+                        if (isset($box["reserved"])) {
+                            $bit->putUIBits($box["reserved"], 4);
+                        } else {
+                            $bit->putUIBits(0, 4);
+                        }
                     } else {
                         $indexSize = $box["indexSize"];
                         $bit->putUIBits($indexSize, 4);
