@@ -829,9 +829,10 @@ class IO_HEIF {
         //
         $hevc = new IO_HEIF_HEVC();
         $hevc->input($hevcdata);
+        $mdatData = $hevc->getMDATdata();
         $ftyp = ["type" => "ftyp",
                  "major" => "mif1", "alt" => ["mif1", "heic"] ];
-        $mdat = ["type" => "mdat", "data" => $hevc->getMDATdata(),
+        $mdat = ["type" => "mdat", "data" => $mdatData,
                  "_mdatId" => $itemID, "_offsetRelative" => 0 ];
         $hdlr = ["type" => "hdlr", "version" => 0, "flags" => 0,
                  "conponentType" => "\0\0\0\0",
@@ -865,18 +866,17 @@ class IO_HEIF {
         $ipma = ["type" => "ipma",
                  "version" => 0, "flags" => 0,
                  "entryArray" => [
-                     ["itemID" => 1,
-                      "associationCArray" => [
+                     ["itemID" => $itemID,
+                      "associationArray" => [
                           ["essential" => 0, "propertyIndex" => 1],
-                          ["essential" => 0,  "propertyIndex" => 2],
-                          ["essential" => 1,  "propertyIndex" => 3]
+                          ["essential" => 0, "propertyIndex" => 2],
+                          ["essential" => 1, "propertyIndex" => 3]
                       ]]
                  ]];
         $iprp = ["type" => "iprp",
                  "boxList" => [
-                     ["type" => "ipco", "boxList" =>
-                      ["boxList" => [$ispe, $pasp, $hvcC, $ipma]
-                      ]]
+                     ["type" => "ipco",
+                      "boxList" => [$ispe, $pasp, $hvcC, $ipma] ]
                  ]];
         $meta = ["type" => "meta", "version" => 0, "flags" => 0,
                  "boxList" => [$hdlr, $iloc, $iinf, $iprp] ];
