@@ -930,7 +930,7 @@ class IO_HEIF {
             case "mdat":
                 $this->mdatOffsetList []= [
                     "_mdatId" => $box["_mdatId"],
-                    "_offset" => $box["_offset"],
+                    "_offset" => $boxOffset,
                 ];
                 if (isset($box["data"])) {
                     $data = $box["data"];
