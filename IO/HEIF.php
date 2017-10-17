@@ -976,7 +976,7 @@ class IO_HEIF {
                           [ "extentOffset" => 0,
                             "extentLength" => strlen($mdatData) ]
                       ],
-                      "_mdatId" => $itemID, "_offsetRelative" => 0
+                      "_mdatId" => $itemID, "_offsetRelative" => 8
                      ],
                  ]];
         $iinf = ["type" => "iinf", "version" => 0, "flags" => 0,
