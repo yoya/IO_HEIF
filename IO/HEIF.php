@@ -848,8 +848,7 @@ class IO_HEIF {
                 $bit->putUI32BE($box["hspace"]);
                 $bit->putUI32BE($box["vspace"]);
                 break;
-            case "hvcC":
-
+            case "hvcC_":
                 break;
             case "ipma":
                 $bit->putUI8($box["version"]);
