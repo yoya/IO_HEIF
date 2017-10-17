@@ -515,6 +515,11 @@ class IO_HEIF {
             break;
         case "infe":
             $this->printfBox($box, $indentSpace."  version:%d flags:%d  itemID:%d itemProtectionIndex:%d".PHP_EOL);
+            if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
+                ;
+            } else {
+                $this->printfBox($box, $indentSpace."  itemType:%d".PHP_EOL);
+            }
             $this->printfBox($box, $indentSpace."  itemName:%s contentType:%s contentEncoding:%s".PHP_EOL);
             break;
         case "pasp":
