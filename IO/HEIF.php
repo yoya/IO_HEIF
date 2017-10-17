@@ -878,8 +878,8 @@ class IO_HEIF {
                     $bit->putUIBits($nal["NALUnitType"], 6);
                     $bit->putUI16BE(count($nal["nalus"]));
                     foreach ($nal["nalus"] as $nalu) {
-                        $nalUnitLength = $nalu["nalUnitLength"];
-                        $bit->putUI16BE($nalUnitLength );
+                        $nalUnitLength = strlen($nalu["nalUnit"]);
+                        $bit->putUI16BE($nalUnitLength);
                         $bit->putData($nalu["nalUnit"], $nalUnitLength);
                     }
                 }
