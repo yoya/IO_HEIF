@@ -48,7 +48,7 @@ class IO_HEIF_HEVC {
                 "tierFlag" => $profile_tier_level->general_tier_flag,
                 "profileIdc" => $profile_tier_level->general_profile_idc,
                 "profileCompatibilityFlags" => $profileCompatibilityFlags,
-                "constraintIndicatorFlags" => "\x900000000000",
+                "constraintIndicatorFlags" => 0x900000000000,
                 "levelIdc" => $profile_tier_level->general_level_idc,
                 "minSpatialSegmentationIdc" => 0,
                 "parallelismType" => 3,
