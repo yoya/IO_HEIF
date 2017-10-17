@@ -709,8 +709,8 @@ class IO_HEIF {
         $type = $box["type"];
         $bit->putData($type);
         //
-        $origOffset = $box["_offset"];
-        $origLength = $box["_length"];
+        $origOffset = isset($box["_offset"])?$box["_offset"]:null;
+        $origLength = isset($box["_length"])?$box["_length"]:null;
         $origDataOffset = $origOffset + 8;
         $origDataLength = $origLength - 8;
         if (! empty($opts["debug"])) {
