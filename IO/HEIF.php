@@ -878,6 +878,7 @@ class IO_HEIF {
                     $data = substr($this->_heifdata,
                                    $origDataOffset, $origDataLength);
                 }
+                $bit->putData($data);
                 break;
             default:
                 $data = substr($this->_heifdata, $origDataOffset, $origDataLength);
