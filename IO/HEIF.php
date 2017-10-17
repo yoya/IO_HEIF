@@ -763,6 +763,26 @@ class IO_HEIF {
              * no container box (leaf node)
              */
             switch ($type) {
+            case "ftyp":
+                $bit->putData($box["major"], 4);
+                if (! isset($box["minor"])) {
+                    $box["minor"] = 0;
+                }
+                $bit->putUI32BE($box["minor"]);
+                foreach ($box["alt"]  as $altData) {
+                    $bit->putData($altData, 4);
+                }
+                break;
+            case "hdlr":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"], 8 * 3);
+                $bit->putData($box["conponentType"] , 4);
+                $bit->putData($box["conponentSubType"], 4);
+                $bit->putData($box["conponentManufacturer"], 4);
+                $bit->putUI32BE($box["conponentFlags"]);
+                $bit->putUI32BE($box["conponentFlagsMask"]);
+                $bit->putData($box["conponentName"]);
+                break;
             case "iloc":
                 if ($parentType === "iref") {
                     $bit->putUI16BE($box["itemID"]);
@@ -818,14 +838,49 @@ class IO_HEIF {
                     }
                 }
                 break;
-            default:
-                if ($type === "mdat") {
-                    // _mdatId, _offset
-                    $this->mdatOffsetList []= [
-                        "_mdatId" => $box["_mdatId"],
-                        "_offset" => $box["_offset"],
-                    ];
+            case "ispe":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"], 8 * 3);
+                $bit->putUI32BE($box["width"]);
+                $bit->putUI32BE($box["height"]);
+                break;
+            case "pasp":
+                $bit->putUI32BE($box["hspace"]);
+                $bit->putUI32BE($box["vspace"]);
+                break;
+            case "hvcC":
+
+                break;
+            case "ipma":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"], 8 * 3);
+                $bit->putUI32BE(count($box["entryArray"]));
+                foreach ($box["entryArray"] as $entry) {
+                    $bit->putUI16BE($entry["itemID"]);
+                    $bit->putUI8(count($entry["associationArray"]));
+                    foreach ($entry["associationArray"] as $association) {
+                        $bit->putUIBit($association["essential"]);
+                        if ($box["flags"] & 1) {
+                            $bit->putUIBits($association["propertyIndex"], 15);
+                        }  else {
+                            $bit->putUIBits($association["propertyIndex"], 7);
+                        }
+                    }
                 }
+                break;
+            case "mdat":
+                $this->mdatOffsetList []= [
+                    "_mdatId" => $box["_mdatId"],
+                    "_offset" => $box["_offset"],
+                ];
+                if (isset($box["data"])) {
+                    $data = $box["data"];
+                } else {
+                    $data = substr($this->_heifdata,
+                                   $origDataOffset, $origDataLength);
+                }
+                break;
+            default:
                 $data = substr($this->_heifdata, $origDataOffset, $origDataLength);
                 $bit->putData($data);
                 break;
