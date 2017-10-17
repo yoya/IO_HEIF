@@ -984,8 +984,8 @@ class IO_HEIF {
                      ["type" => "infe", "version" => 2, "flags" => 0,
                       "itemID" => $itemID,
                       "itemProtectionIndex" => 0,
-                      "itemName" => "Image",
-                      "contentType" => "contentEncoding"]
+                      "itemType" => 0,
+                      "itemName" => "Image"]
                  ]];
         $ispe = $hevc->getISPE();
         $pasp = $hevc->getPASP();
