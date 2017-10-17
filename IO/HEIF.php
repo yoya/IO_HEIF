@@ -843,6 +843,27 @@ class IO_HEIF {
                     }
                 }
                 break;
+            case "infe":
+                 $bit->putUI8($box["version"]);
+                 $bit->putUIBits($box["flags"], 8 * 3);
+                 $bit->putUI16BE($box["itemID"]);
+                 $bit->putUI16BE($box["itemProtectionIndex"]);
+                 if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
+                     ;
+                 } else {
+                     $bit->putData($box["itemType"], 4);
+                 }
+                 $itemName = explode("\0", $box["itemName"])[0];
+                 $bit->putData($itemName."\0");
+                 if (isset($box["contentType"])) {
+                     $contentType = explode("\0", $box["contentType"] )[0];
+                     $bit->putData($contentType."\0");
+                     if (isset($box["contentEncoding"])) {
+                         $contentEncoding = explode("\0", $box["contentEncoding"] )[0];
+                         $bit->getData($contentEncoding."\0");
+                     }
+                 }
+                break;
             case "ispe":
                 $bit->putUI8($box["version"]);
                 $bit->putUIBits($box["flags"], 8 * 3);
