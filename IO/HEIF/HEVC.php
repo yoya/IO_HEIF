@@ -16,7 +16,15 @@ class IO_HEIF_HEVC {
         $this->hevc = $hevc;
     }
     function getMDATdata() {
-        return $this->hevc->getNALRawDataByType(19); // IDR_W_RADL
+        $idrData = $this->hevc->getNALRawDataByType(19); // IDR_W_RADL
+        $idrDataLenData = pack("N", strlen($idrData));
+        $mdatData = $idrDataLenData . $idrData;
+        $freeData = $this->hevc->getNALRawDataByType(39); // PREFIX_SEI_NUT
+        if ($freeData) {
+            $freeDataLenData = pack("N", strlen($freeData));
+            $mdatData = $freeDataLenData . $freeData . $mdatData;
+        }
+        return $mdatData;
     }
     function getISPE() {
         $sps = $this->hevc->getNALByType(33); // SPS_NUT

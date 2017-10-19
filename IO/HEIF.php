@@ -957,10 +957,12 @@ class IO_HEIF {
         $hevc = new IO_HEIF_HEVC();
         $hevc->input($hevcdata);
         $mdatData = $hevc->getMDATdata();
+        $mdatPrefix = "\0\0\0\0\0\0\0\0";
+        $offsetRelative = 8 + strlen($mdatPrefix);
         $ftyp = ["type" => "ftyp",
                  "major" => "mif1", "alt" => ["mif1", "heic"] ];
         $mdat = ["type" => "mdat", "data" => $mdatData,
-                 "_mdatId" => $itemID, "_offsetRelative" => 0 ];
+                 "_mdatId" => $itemID, "_offsetRelative" => $offsetRelative ];
         $hdlr = ["type" => "hdlr", "version" => 0, "flags" => 0,
                  "conponentType" => "\0\0\0\0",
                  "conponentSubType" => "pict",
@@ -976,7 +978,7 @@ class IO_HEIF {
                           [ "extentOffset" => 0,
                             "extentLength" => strlen($mdatData) ]
                       ],
-                      "_mdatId" => $itemID, "_offsetRelative" => 8
+                      "_mdatId" => $itemID, "_offsetRelative" => $offsetRelative,
                      ],
                  ]];
         $iinf = ["type" => "iinf", "version" => 0, "flags" => 0,
