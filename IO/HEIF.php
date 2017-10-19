@@ -145,12 +145,12 @@ class IO_HEIF {
         case "hdlr":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
-            $box["conponentType"] = $bit->getData(4);
-            $box["conponentSubType"] = $bit->getData(4);
-            $box["conponentManufacturer"] = $bit->getData(4);
-            $box["conponentFlags"] = $bit->getUI32BE();
-            $box["conponentFlagsMask"] = $bit->getUI32BE();
-            $box["conponentName"] = $bit->getData($dataLen - 24);
+            $box["componentType"] = $bit->getData(4);
+            $box["componentSubType"] = $bit->getData(4);
+            $box["componentManufacturer"] = $bit->getData(4);
+            $box["componentFlags"] = $bit->getUI32BE();
+            $box["componentFlagsMask"] = $bit->getUI32BE();
+            $box["componentName"] = $bit->getData($dataLen - 24);
             break;
         case "mvhd":
             $box["version"] = $bit->getUI8();
@@ -781,12 +781,12 @@ class IO_HEIF {
             case "hdlr":
                 $bit->putUI8($box["version"]);
                 $bit->putUIBits($box["flags"], 8 * 3);
-                $bit->putData($box["conponentType"] , 4);
-                $bit->putData($box["conponentSubType"], 4);
-                $bit->putData($box["conponentManufacturer"], 4);
-                $bit->putUI32BE($box["conponentFlags"]);
-                $bit->putUI32BE($box["conponentFlagsMask"]);
-                $bit->putData($box["conponentName"]);
+                $bit->putData($box["componentType"] , 4);
+                $bit->putData($box["componentSubType"], 4);
+                $bit->putData($box["componentManufacturer"], 4);
+                $bit->putUI32BE($box["componentFlags"]);
+                $bit->putUI32BE($box["componentFlagsMask"]);
+                $bit->putData($box["componentName"]);
                 break;
             case "iloc":
                 if ($parentType === "iref") {
@@ -963,11 +963,11 @@ class IO_HEIF {
         $mdat = ["type" => "mdat", "data" => $mdatData,
                  "_mdatId" => $itemID, "_offsetRelative" => $offsetRelative ];
         $hdlr = ["type" => "hdlr", "version" => 0, "flags" => 0,
-                 "conponentType" => "\0\0\0\0",
-                 "conponentSubType" => "pict",
-                 "conponentManufacturer" => "\0\0\0\0",
-                 "conponentFlags" => 0, "conponentFlagsMask" => 0,
-                 "conponentName" => "IO_HEIF pict Handler\0" ];
+                 "componentType" => "\0\0\0\0",
+                 "componentSubType" => "pict",
+                 "componentManufacturer" => "\0\0\0\0",
+                 "componentFlags" => 0, "componentFlagsMask" => 0,
+                 "componentName" => "IO_HEIF pict Handler\0" ];
         $iloc = ["type" => "iloc",  "version" => 0, "flags" => 0,
                  "offsetSize" => 0, "lengthSize" => 4, "baseOffsetSize" => 4,
                  "itemArray" => [
