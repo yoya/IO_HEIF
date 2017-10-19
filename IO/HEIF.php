@@ -1003,7 +1003,8 @@ class IO_HEIF {
         $iprp = ["type" => "iprp",
                  "boxList" => [
                      ["type" => "ipco",
-                      "boxList" => [$ispe, $pasp, $hvcC, $ipma] ]
+                      "boxList" => [$ispe, $pasp, $hvcC] ],
+                     $ipma
                  ]];
         $meta = ["type" => "meta", "version" => 0, "flags" => 0,
                  "boxList" => [$hdlr, $iloc, $iinf, $iprp] ];
