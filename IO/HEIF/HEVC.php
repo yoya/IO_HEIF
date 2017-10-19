@@ -6,7 +6,12 @@
   ref) https://www.itu.int/rec/T-REC-H.265
  */
 
-require_once 'IO/HEVC.php';
+if (is_readable('vendor/autoload.php')) {
+    require 'vendor/autoload.php';
+} else {
+    require_once 'IO/HEVC.php';
+}
+
 
 class IO_HEIF_HEVC {
     var $naluList;

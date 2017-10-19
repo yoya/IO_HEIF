@@ -6,7 +6,11 @@
   ref) https://developer.apple.com/standards/qtff-2001.pdf
  */
 
-require_once 'IO/Bit.php';
+if (is_readable('vendor/autoload.php')) {
+    require 'vendor/autoload.php';
+} else {
+    require_once 'IO/Bit.php';
+}
 require_once dirname(__FILE__).'/HEIF/HEVC.php';
 
 function getTypeDescription($type) {
