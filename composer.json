@@ -14,7 +14,7 @@
     "require": {
         "php": ">=5.1.0",
         "yoya/io_bit": "~2.4.0",
-	"yoya/io_hevc": "~1.2"
+	"yoya/io_hevc": "~1.3"
     },
     "autoload": {
         "psr-0": { "IO_HEIF": "." }
