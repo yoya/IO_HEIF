@@ -957,8 +957,7 @@ class IO_HEIF {
         $hevc = new IO_HEIF_HEVC();
         $hevc->input($hevcdata);
         $mdatData = $hevc->getMDATdata();
-        $mdatPrefix = "\0\0\0\0\0\0\0\0";
-        $offsetRelative = 8 + strlen($mdatPrefix);
+        $offsetRelative = 8;
         $ftyp = ["type" => "ftyp",
                  "major" => "mif1", "alt" => ["mif1", "heic"] ];
         $mdat = ["type" => "mdat", "data" => $mdatData,
