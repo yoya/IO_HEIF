@@ -71,14 +71,11 @@ class IO_HEIF_HEVC {
                 "temporalIdNested" => 1,
                 "lengthSizeMinusOne" => 3,
                 "nalArrays" => [
-                    [ "array_completeness" => 1,
-                      "NALUnitType" => 32,
+                    [ "array_completeness" => 1, "NALUnitType" => 32,
                       "nalus" => [["nalUnit" => $vpsData]] ],
-                    [ "array_completeness" => 1,
-                      "NALUnitType" => 33,
+                    [ "array_completeness" => 1, "NALUnitType" => 33,
                       "nalus" => [["nalUnit" => $spsData]] ],
-                    [ "array_completeness" => 1,
-                      "NALUnitType" => 34,
+                    [ "array_completeness" => 1, "NALUnitType" => 34,
                       "nalus" => [["nalUnit" => $ppsData]] ],
                 ],
         ];
