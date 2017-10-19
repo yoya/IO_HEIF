@@ -984,7 +984,7 @@ class IO_HEIF {
                      ["type" => "infe", "version" => 2, "flags" => 0,
                       "itemID" => $itemID,
                       "itemProtectionIndex" => 0,
-                      "itemType" => 0,
+                      "itemType" => "hvc1",
                       "itemName" => "Image"]
                  ]];
         $ispe = $hevc->getISPE();
