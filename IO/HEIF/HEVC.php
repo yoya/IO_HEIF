@@ -10,6 +10,7 @@ if (is_readable('vendor/autoload.php')) {
     require 'vendor/autoload.php';
 } else {
     require_once 'IO/HEVC.php';
+    require_once 'IO/HEVC/Bit.php';
 }
 
 
@@ -50,20 +51,35 @@ class IO_HEIF_HEVC {
         $ppsData = $this->hevc->getNALRawDataByType(34); // PPS_NUT (RawData)
         $sps_unit = $sps->unit;
         $profile_tier_level = $sps_unit->profile_tier_level;
-        $profileCompatibilityFlagsBit = new IO_Bit();
-        $profileCompatibilityFlags = 0;
-        foreach ($profile_tier_level->general_profile_compatibility_flag as $flag) {
-            $profileCompatibilityFlags <<= 1;
-            $profileCompatibilityFlags |= $flag;
-        }
-
+        $bit_hevc = new IO_HEVC_Bit();
+        $bit_hevc->input($spsData);
+        /*
+          -  SPS header
+          f1 forbidden_zero_bit
+          u6 nal_unit_type
+          u6 nuh_layer_id
+          u3 nuh_temporal_id_plus1
+          -  SPS unit
+          u4 sps_video_parameter_set_id
+          u3 sps_max_sub_layers_minus1
+          u1 sps_temporal_id_nesting_flag
+          - ProfileTierLevel
+          u2 general_profile_space
+          u1 general_tier_flag
+          u5 general_profile_idc
+          u32 general_profile_compatibility_flag(s)
+          u48 (constraintIndicatorFlags)
+        */
+        $bit_hevc->incrementOffset(4, 0);
+        $profileCompatibilityFlags = $bit_hevc->getUIBits(32);
+        $constraintIndicatorFlags = $bit_hevc->getUIBits(48);
         return ["type" => "hvcC",
                 "version" => 1,
                 "profileSpace" => $profile_tier_level->general_profile_space,
                 "tierFlag" => $profile_tier_level->general_tier_flag,
                 "profileIdc" => $profile_tier_level->general_profile_idc,
                 "profileCompatibilityFlags" => $profileCompatibilityFlags,
-                "constraintIndicatorFlags" => 0x900000000000,
+                "constraintIndicatorFlags" => $constraintIndicatorFlags,
                 "levelIdc" => $profile_tier_level->general_level_idc,
                 "minSpatialSegmentationIdc" => 0,
                 "parallelismType" => 3,
