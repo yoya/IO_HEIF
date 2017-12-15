@@ -1019,12 +1019,12 @@ class IO_HEIF {
         $buildInfo = $this->getHEIFBuildInfo($this->boxTree);
         $itemID = array_keys($buildInfo["ipma"])[0];
         $loc = $buildInfo["iloc"][$itemID];
-        $mdatNal = substr($this->_heifdata,
-                          $loc["baseOffset"], $loc["extentLength"]);
         foreach ($buildInfo["hvcC"]["nals"] as $nal) {
             echo "\0\0\0\1".$nal;
         }
-        echo "\0\0\0\1".$mdatNal;
+        $idrData = substr($this->_heifdata,
+                          $loc["baseOffset"] + 4, $loc["extentLength"] - 4);
+        echo "\0\0\0\1".$idrData;
     }
     function getHEIFBuildInfo($boxList) {
         $buildInfo = array();
