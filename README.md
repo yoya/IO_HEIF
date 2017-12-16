@@ -22,7 +22,7 @@ bidirectional converter with H.265/HEVC
 - heifdump.php
 
 ```
-% php sample/heifdump.php -f tedt.heic
+% php sample/heifdump.php -f test.heic
 type:ftyp(offset:0 len:24):File Type and Compatibility
   major:mif1 minor:0  alt:mif1, heic
 type:mdat(offset:24 len:139682):Media Data
