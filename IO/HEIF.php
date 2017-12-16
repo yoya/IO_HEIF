@@ -1022,9 +1022,18 @@ class IO_HEIF {
         foreach ($buildInfo["hvcC"]["nals"] as $nal) {
             echo "\0\0\0\1".$nal;
         }
-        $idrData = substr($this->_heifdata,
-                          $loc["baseOffset"] + 4, $loc["extentLength"] - 4);
-        echo "\0\0\0\1".$idrData;
+        $mdatBit = new IO_Bit();
+        $mdatBit->input(substr($this->_heifdata,
+                               $loc["baseOffset"], $loc["extentLength"]));
+
+        while ($mdatBit->hasNextData(4)) {
+            $len = $mdatBit->getUI32BE();
+            if ($mdatBit->hasNextData($len)) {
+                echo "\0\0\0\1".$mdatBit->getData($len);
+            } else {
+                break;
+            }
+        }
     }
     function getHEIFBuildInfo($boxList) {
         $buildInfo = array();
