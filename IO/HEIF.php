@@ -48,6 +48,19 @@ function getTypeDescription($type) {
     return null;
 }
 
+function getChromeFormatDescription($format) {
+    static $chromeFormatDescription = [
+        0 => "Grayscale",
+        1 => "YUV420",
+        2 => "YUV422",
+        3 => "YUV444",
+    ];
+    if (isset($chromeFormatDescription[$format])) {
+        return $chromeFormatDescription[$format];
+    }
+    return "Unknown Chroma Format";
+}
+
 class IO_HEIF {
     var $_chunkList = null;
     var $_heifdata = null;
@@ -537,7 +550,8 @@ class IO_HEIF {
             $this->printfBox($box, $indentSpace."  profileCompatibilityFlags:0x%x".PHP_EOL);
             $this->printfBox($box, $indentSpace."  constraintIndicatorFlags:0x%x levelIdc:%d".PHP_EOL);
             $this->printfBox($box, $indentSpace."  minSpatialSegmentationIdc:%d parallelismType:%d".PHP_EOL);
-            $this->printfBox($box, $indentSpace."  chromaFormat:%d bitDepthLumaMinus8:%d bitDepthChromaMinus8:%d".PHP_EOL);
+            $chromaFormatStr = getChromeFormatDescription($box["chromaFormat"]);
+            $this->printfBox($box, $indentSpace."  chromaFormat:%d($chromaFormatStr) bitDepthLumaMinus8:%d bitDepthChromaMinus8:%d".PHP_EOL);
             $this->printfBox($box, $indentSpace."  avgFrameRate:%d constantFrameRate:%d".PHP_EOL);
             $this->printfBox($box, $indentSpace."  numTemporalLayers:%d temporalIdNested:%d lengthSizeMinusOne:%d".PHP_EOL);
             foreach ($box["nalArrays"] as $nal) {
