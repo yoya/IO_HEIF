@@ -139,7 +139,9 @@ class IO_HEIF {
         list($boxOffset, $dummy) = $bit->getOffset();
         $indentSpace = str_repeat(" ", ($opts["indent"]-1) * 4);
         $boxLength = $bit->getUI32BE();
-        if ($boxLength < 8) {
+        if ($boxLength <= 1) {
+            $boxLength = null;
+        } else if ($boxLength < 8) {
             list($offset, $dummy) = $bit->getOffset();
             throw new Exception("parseBox: boxLength($boxLength) < 8 (fileOffset:$offset)");
         }
@@ -148,12 +150,17 @@ class IO_HEIF {
         if (! empty($opts["debug"])) {
             fwrite(STDERR, "DEBUG: parseBox:$indentSpace type:$type offset:$boxOffset boxLength:$boxLength\n");
         }
-        if ($bit->hasNextData($boxLength - 8) === false) {
+        if ($boxLength && ($bit->hasNextData($boxLength - 8) === false)) {
             list($offset, $dummy) = $bit->getOffset();
             throw new Exception("parseBox: hasNext(boxLength:$boxLength - 8) === false (boxOffset:$boxOffset) (fileOffset:$offset)");
         }
-        $nextOffset = $boxOffset + $boxLength;
-        $dataLen = $boxLength - 8; // 8 = len(4) + type(4)
+        if ($boxLength) {
+            $nextOffset = $boxOffset + $boxLength;
+            $dataLen = $boxLength - 8; // 8 = len(4) + type(4)
+        } else {
+            $nextOffset = null;
+            $dataLen = null;
+        }
         switch($type) {
         case "ftyp":
             $box["major"] = $bit->getData(4);
@@ -461,7 +468,14 @@ class IO_HEIF {
         default:
             break;
         }
-        $bit->setOffset($nextOffset, 0);
+        if ($boxLength) {
+            $bit->setOffset($nextOffset, 0);
+        } else {
+            $bit->getDataUntil(false); // skip to the end
+            $currOffset = $bit->getOffset()[0];
+            $boxLength = $currOffset - $box["_offset"];
+            $box["_length"] = $boxLength;
+        }
         return $box;
     }
     function dump($opts = array()) {
