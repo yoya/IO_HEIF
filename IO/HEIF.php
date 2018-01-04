@@ -140,7 +140,8 @@ class IO_HEIF {
         $indentSpace = str_repeat(" ", ($opts["indent"]-1) * 4);
         $boxLength = $bit->getUI32BE();
         if ($boxLength < 8) {
-            throw new Exception("parseBox: boxLength($boxLength) < 8");
+            list($offset, $dummy) = $bit->getOffset();
+            throw new Exception("parseBox: boxLength($boxLength) < 8 (fileOffset:$offset)");
         }
         $type = $bit->getData(4);
         $box = ["type" => $type, "_offset" => $boxOffset, "_length" => $boxLength];
@@ -148,7 +149,8 @@ class IO_HEIF {
             fwrite(STDERR, "DEBUG: parseBox:$indentSpace type:$type offset:$boxOffset boxLength:$boxLength\n");
         }
         if ($bit->hasNextData($boxLength - 8) === false) {
-            throw new Exception("parseBox: hasNext(boxLength:$boxLength - 8) === false (boxOffset:$boxOffset)");
+            list($offset, $dummy) = $bit->getOffset();
+            throw new Exception("parseBox: hasNext(boxLength:$boxLength - 8) === false (boxOffset:$boxOffset) (fileOffset:$offset)");
         }
         $nextOffset = $boxOffset + $boxLength;
         $dataLen = $boxLength - 8; // 8 = len(4) + type(4)
