@@ -437,9 +437,13 @@ class IO_HEIF {
         case "dref":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
-            $box["entryCount"] = $bit->getUI32BE();
+            $entryCount = $bit->getUI32BE();
+            $box["entryCount"] = $entryCount;
             $dataLen -= 8;
             $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type, $opts);
+            if (count($box["boxList"]) !== $entryCount) {
+                throw new Exception("parseBox: box[boxList]:{$box['entryCount']} != entryCount:$entryCount");
+            }
             break;
         case "url ":
             $box["location"] = $bit->getData($dataLen);
@@ -918,13 +922,12 @@ class IO_HEIF {
             case "dref":
                 $bit->putUI8($box["version"]);
                 $bit->putUIBits($box["flags"], 8 * 3);
-                $entryCount = count($box["entryArray"]);
-                if ($box["entryCount"] != $entryCount) {
-                    throw new Exception("buildBox: box[entryCount]:{$box['entryCount']} != entryCount:$entryCount");
+                $entryCount = count($box["boxList"]);
+                if ($box["entryCount"] !== $entryCount) {
+                    throw new Exception("buildBox: box[boxList]:{$box['entryCount']} != entryCount:$entryCount");
                 }
-                $bit->putUI32BE($box["entryCount"]);
-                $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type, $opts);
-                $this->buildBoxList($bit, $this->boxTree, null, $opts);
+                $bit->putUI32BE($entryCount);
+                $this->buildBoxList($bit, $box["boxList"], null, $opts);
                 break;
             case "url ":
                 $bit->putData($box["location"]);
