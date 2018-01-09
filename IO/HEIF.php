@@ -28,6 +28,11 @@ function getTypeDescription($type) {
         "iinf" => "Item information",
         "infe" => "Item information entry",
         //
+        "dinf" => "Data information Box",
+        "dref" => "Data Referenve Box",
+        "url " => "Data Entry Url Box",
+        "urn " => "Data Entry Urn Box",
+        //
         "iref" => "Item Reference Box",
         "dimg" => "Derived Image",
         "thmb" => "Thumbnail",
@@ -429,6 +434,16 @@ class IO_HEIF {
                 }
             }
             break;
+        case "dref":
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["entryCount"] = $bit->getUI32BE();
+            $dataLen -= 8;
+            $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type, $opts);
+            break;
+        case "url ":
+            $box["location"] = $bit->getData($dataLen);
+            break;
         case "auxC":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -456,6 +471,7 @@ class IO_HEIF {
         case "trak":
         case "mdia":
         case "meta": // Metadata
+        case "dinf": // data infomation
         case "iprp": // item properties
         case "ipco": // item property container
             if ($type === "meta") {
@@ -782,6 +798,7 @@ class IO_HEIF {
             case "trak":
             case "mdia":
             case "meta": // Metadata
+            case "dinf": // data infomation
             case "iprp": // item properties
             case "ipco": // item property container
                 if ($type === "meta") {
@@ -897,6 +914,20 @@ class IO_HEIF {
                          $bit->getData($contentEncoding."\0");
                      }
                  }
+                break;
+            case "dref":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"], 8 * 3);
+                $entryCount = count($box["entryArray"]);
+                if ($box["entryCount"] != $entryCount) {
+                    throw new Exception("buildBox: box[entryCount]:{$box['entryCount']} != entryCount:$entryCount");
+                }
+                $bit->putUI32BE($box["entryCount"]);
+                $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type, $opts);
+                $this->buildBoxList($bit, $this->boxTree, null, $opts);
+                break;
+            case "url ":
+                $bit->putData($box["location"]);
                 break;
             case "ispe":
                 $bit->putUI8($box["version"]);
