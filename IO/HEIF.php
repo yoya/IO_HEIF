@@ -377,6 +377,11 @@ class IO_HEIF {
             }
             $box["itemArray"] = $itemArray;
             break;
+        case "colr":
+            $box["subtype"] = $bit->getData(4);
+            $dataLen -= 4;
+            $box["data"] = $bit->getData($dataLen);
+            break;
         case "pixi":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -564,6 +569,10 @@ class IO_HEIF {
             foreach ($box["itemArray"] as $item) {
                 $this->printfBox($item, $indentSpace."    itemID:%d".PHP_EOL);
             }
+            break;
+        case "colr":
+            $this->printfBox($box, $indentSpace."  subtype:%s");
+            echo "  data(len:".strlen($box["data"]).")".PHP_EOL;
             break;
         case "pixi":
             $this->printfBox($box, $indentSpace."  channelCount:%d".PHP_EOL);
