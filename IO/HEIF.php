@@ -842,6 +842,12 @@ class IO_HEIF {
                     $dataLength = 8;
                 }
                 break;
+            case "dref":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"] , 8 * 3);
+                $bit->putUI32BE(count($box["boxList"]));
+                $dataLength = 8;
+                break;
             case "moov": // Movie Atoms
             case "trak":
             case "mdia":
