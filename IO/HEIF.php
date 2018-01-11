@@ -451,6 +451,17 @@ class IO_HEIF {
                 }
             }
             break;
+        case "dimg":
+            $box["fromItemID"] = $bit->getUI16BE();
+            $box["itemCount"] = $bit->getUI16BE();
+            $itemArray = [];
+            for ($i = 0 ; $i < $box["itemCount"] ; $i++) {
+                $item = [];
+                $item["itemID"] = $bit->getUI16BE();
+                $itemArray []= $item;
+            }
+            $box["itemArray"] = $itemArray;
+            break;
         case "dref":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -601,6 +612,12 @@ class IO_HEIF {
                 $this->printfBox($box, $indentSpace."  itemType:%d".PHP_EOL);
             }
             $this->printfBox($box, $indentSpace."  itemName:%s contentType:%s contentEncoding:%s".PHP_EOL);
+            break;
+            case "dimg":
+                $this->printfBox($box, $indentSpace."  fromItemID:%d".PHP_EOL);
+                foreach ($box["itemArray"] as $item) {
+                    $this->printfBox($item, $indentSpace."    itemID:%d".PHP_EOL);
+                }
             break;
         case "pasp":
             echo $indentSpace."  hspace:".$box["hspace"]." vspace:".$box["vspace"].PHP_EOL;
@@ -946,6 +963,17 @@ class IO_HEIF {
                      }
                  }
                 break;
+            case "dimg":
+                $bit->putUI16BE($box["fromItemID"]);
+                $itemCount = count($box["itemArray"]);
+                if ($box["itemCount"] !== $itemCount) {
+                    throw new Exception("buildBox: box[itemCount]:{$box['itemCount']} != itemCount:$itemCount");
+                }
+                $bit->putUI16BE($itemCount);
+                foreach ($box["itemArray"] as $item) {
+                    $bit->putUI16BE($item["itemID"]);
+                }
+            break;
             case "dref":
                 $bit->putUI8($box["version"]);
                 $bit->putUIBits($box["flags"], 8 * 3);
