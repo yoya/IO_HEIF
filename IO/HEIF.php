@@ -45,6 +45,8 @@ function getTypeDescription($type) {
         "hvcC" => "HEVC Decoder Conf",
         "ispe" => "Image Spatial Extents", // width, height
         "colr" => "Colour Information", // ICC profile
+        "pixi" => "Pixel Information",
+        //
         "ipma" => "Item Properties Association",
     ];
     if (isset($getTypeDescriptionTable[$type])) {
@@ -375,6 +377,16 @@ class IO_HEIF {
             }
             $box["itemArray"] = $itemArray;
             break;
+        case "pixi":
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["channelCount"] = $bit->getUI8();
+            $channelArray = [];
+            for ($i = 0 ; $i < $box["channelCount"] ; $i++) {
+                $channelArray []= [ "bitsPerChannel" => $bit->getUI8() ];
+            }
+            $box["channelArray"] = $channelArray;
+            break;
         case "ipma":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -551,6 +563,12 @@ class IO_HEIF {
             $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
             foreach ($box["itemArray"] as $item) {
                 $this->printfBox($item, $indentSpace."    itemID:%d".PHP_EOL);
+            }
+            break;
+        case "pixi":
+            $this->printfBox($box, $indentSpace."  channelCount:%d".PHP_EOL);
+            foreach ($box["channelArray"] as $item) {
+                $this->printfBox($item, $indentSpace."    bitsPerChannel:%d".PHP_EOL);
             }
             break;
         case "ipma":
