@@ -609,7 +609,7 @@ class IO_HEIF {
             if ($box["version"] <= 1) {  // XXX: 0 or 1 ???
                 ;
             } else {
-                $this->printfBox($box, $indentSpace."  itemType:%d".PHP_EOL);
+                $this->printfBox($box, $indentSpace."  itemType:%s".PHP_EOL);
             }
             $this->printfBox($box, $indentSpace."  itemName:%s contentType:%s contentEncoding:%s".PHP_EOL);
             break;
