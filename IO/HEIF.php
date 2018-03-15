@@ -46,6 +46,7 @@ function getTypeDescription($type) {
         "ispe" => "Image Spatial Extents", // width, height
         "colr" => "Colour Information", // ICC profile
         "pixi" => "Pixel Information",
+        "clap" => "Clear Aperture",
         //
         "ipma" => "Item Properties Association",
     ];
@@ -392,6 +393,16 @@ class IO_HEIF {
             }
             $box["channelArray"] = $channelArray;
             break;
+        case "clap":
+            $box["width_N"] = $bit->getSI32BE();
+            $box["width_D"] = $bit->getSI32BE();
+            $box["height_N"] = $bit->getSI32BE();
+            $box["height_D"] = $bit->getSI32BE();
+            $box["horizOff_N"] = $bit->getSI32BE();
+            $box["horizOff_D"] = $bit->getSI32BE();
+            $box["vertOff_N"] = $bit->getSI32BE();
+            $box["vertOff_D"] = $bit->getSI32BE();
+            break;
         case "ipma":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -590,6 +601,10 @@ class IO_HEIF {
             foreach ($box["channelArray"] as $item) {
                 $this->printfBox($item, $indentSpace."    bitsPerChannel:%d".PHP_EOL);
             }
+            break;
+        case "clap":
+            $this->printfBox($box, $indentSpace."  width_N:%d / width_D:%d  height_N:%d / height_D:%d".PHP_EOL);
+            $this->printfBox($box, $indentSpace."  horizOff_N:%d / horizOff_D:%d  vertOff_N:%d / vertOff_D:%d".PHP_EOL);
             break;
         case "ipma":
             $this->printfBox($box, $indentSpace."  version:%d flags:%d".PHP_EOL);
@@ -1038,6 +1053,16 @@ class IO_HEIF {
                         $bit->putData($nalu["nalUnit"], $nalUnitLength);
                     }
                 }
+                break;
+            case "clap":
+                $bit->putSI32BE($box["width_N"]);
+                $bit->putSI32BE($box["width_D"]);
+                $bit->putSI32BE($box["height_N"];
+                $bit->putSI32BE($box["height_D"]);
+                $bit->putSI32BE($box["horizOff_N"]);
+                $bit->putSI32BE($box["horizOff_D"]);
+                $bit->putSI32BE($box["vertOff_N"]);
+                $bit->putSI32BE($box["vertOff_D"]);
                 break;
             case "ipma":
                 $bit->putUI8($box["version"]);
