@@ -1057,7 +1057,7 @@ class IO_HEIF {
             case "clap":
                 $bit->putSI32BE($box["width_N"]);
                 $bit->putSI32BE($box["width_D"]);
-                $bit->putSI32BE($box["height_N"];
+                $bit->putSI32BE($box["height_N"]);
                 $bit->putSI32BE($box["height_D"]);
                 $bit->putSI32BE($box["horizOff_N"]);
                 $bit->putSI32BE($box["horizOff_D"]);
