@@ -1023,29 +1023,40 @@ class IO_HEIF {
                 $bit->putUIBits($box["profileSpace"], 2);
                 $bit->putUIBit($box["tierFlag"]);
                 $bit->putUIBits($box["profileIdc"], 5);
+                //
                 $bit->putUI32BE($box["profileCompatibilityFlags"]);
                 $bit->putUIBits($box["constraintIndicatorFlags"], 48);
+                //
                 $bit->putUI8($box["levelIdc"]);
+                //
                 $bit->putUIBits(0xF, 4); // reserved
                 $bit->putUIBits($box["minSpatialSegmentationIdc"], 12);
+                //
                 $bit->putUIBits(0x3F, 6); // reserved
                 $bit->putUIBits($box["parallelismType"], 2);
+                //
                 $bit->putUIBits(0x3F, 6); // reserved
                 $bit->putUIBits($box["chromaFormat"], 2);
+                //
                 $bit->putUIBits(0x1F, 5); // reserved
                 $bit->putUIBits($box["bitDepthLumaMinus8"], 3);
+                //
                 $bit->putUIBits(0x1F, 5); // reserved
                 $bit->putUIBits($box["bitDepthChromaMinus8"], 3);
+                //
                 $bit->putUIBits($box["avgFrameRate"], 16);
+                //
                 $bit->putUIBits($box["constantFrameRate"], 2);
                 $bit->putUIBits($box["numTemporalLayers"], 3);
                 $bit->putUIBit($box["temporalIdNested"]);
                 $bit->putUIBits($box["lengthSizeMinusOne"], 2);
+                //
                 $bit->putUI8(count($box["nalArrays"]));
                 foreach ($box["nalArrays"] as $nal) {
                     $bit->putUIBit($nal["array_completeness"]);
                     $bit->putUIBit(0); // reserved
                     $bit->putUIBits($nal["NALUnitType"], 6);
+
                     $bit->putUI16BE(count($nal["nalus"]));
                     foreach ($nal["nalus"] as $nalu) {
                         $nalUnitLength = strlen($nalu["nalUnit"]);
