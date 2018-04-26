@@ -637,6 +637,9 @@ class IO_HEIF {
         case "pasp":
             echo $indentSpace."  hspace:".$box["hspace"]." vspace:".$box["vspace"].PHP_EOL;
             break;
+        case "pitm":
+            $this->printfBox($box, $indentSpace."  version:%d flags:%d  itemID:%d".PHP_EOL);
+            break;
         case "hvcC":
             $profileIdc = $box["profileIdc"];
             $profileIdcStr = ($profileIdc===1)?"Main profile":(($profileIdc===2)?"Main10 profile":"unknown profile");
@@ -1018,6 +1021,11 @@ class IO_HEIF {
                 $bit->putUI32BE($box["hspace"]);
                 $bit->putUI32BE($box["vspace"]);
                 break;
+            case "pitm":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"], 8 * 3);
+                $bit->putUI16BE($box["itemID"]);
+            break;
             case "hvcC":
                 $bit->putUI8($box["version"]);
                 $bit->putUIBits($box["profileSpace"], 2);
@@ -1133,6 +1141,8 @@ class IO_HEIF {
                  "componentManufacturer" => "\0\0\0\0",
                  "componentFlags" => 0, "componentFlagsMask" => 0,
                  "componentName" => "IO_HEIF pict Handler\0" ];
+        $pitm = ["type" => "pitm",  "version" => 0, "flags" => 0,
+                 "itemID" => $itemID];
         $iloc = ["type" => "iloc",  "version" => 0, "flags" => 0,
                  "offsetSize" => 0, "lengthSize" => 4, "baseOffsetSize" => 4,
                  "itemArray" => [
@@ -1173,7 +1183,7 @@ class IO_HEIF {
                      $ipma
                  ]];
         $meta = ["type" => "meta", "version" => 0, "flags" => 0,
-                 "boxList" => [$hdlr, $iloc, $iinf, $iprp] ];
+                 "boxList" => [$hdlr, $pitm, $iloc, $iinf, $iprp] ];
         $this->boxTree = [$ftyp, $mdat, $meta];
     }
     function toHEVC($opts = array()) {
