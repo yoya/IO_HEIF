@@ -46,7 +46,7 @@ function getTypeDescription($type) {
         "ispe" => "Image Spatial Extents", // width, height
         "colr" => "Colour Information", // ICC profile
         "pixi" => "Pixel Information",
-        "clap" => "Clear Aperture",
+        "clap" => "Clean Aperture",
         //
         "ipma" => "Item Properties Association",
     ];
