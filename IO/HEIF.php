@@ -998,16 +998,6 @@ class IO_HEIF {
                     $bit->putUI16BE($item["itemID"]);
                 }
             break;
-            case "dref":
-                $bit->putUI8($box["version"]);
-                $bit->putUIBits($box["flags"], 8 * 3);
-                $entryCount = count($box["boxList"]);
-                if ($box["entryCount"] !== $entryCount) {
-                    throw new Exception("buildBox: box[boxList]:{$box['entryCount']} != entryCount:$entryCount");
-                }
-                $bit->putUI32BE($entryCount);
-                $this->buildBoxList($bit, $box["boxList"], null, $opts);
-                break;
             case "url ":
                 $bit->putData($box["location"]);
                 break;
