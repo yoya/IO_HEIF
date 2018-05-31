@@ -485,7 +485,9 @@ class IO_HEIF {
             }
             break;
         case "url ":
-            $box["location"] = $bit->getData($dataLen);
+            $box["version"] = $bit->getUI8();
+            $box["flags"] = $bit->getUIBits(8 * 3);
+            $box["location"] = $bit->getData($dataLen - 4);
             break;
         case "auxC":
             $box["version"] = $bit->getUI8();
@@ -633,6 +635,9 @@ class IO_HEIF {
                 foreach ($box["itemArray"] as $item) {
                     $this->printfBox($item, $indentSpace."    itemID:%d".PHP_EOL);
                 }
+            break;
+        case "url ":
+            $this->printfBox($box, $indentSpace."  version:%d flags:%d  location:%s".PHP_EOL);
             break;
         case "pasp":
             echo $indentSpace."  hspace:".$box["hspace"]." vspace:".$box["vspace"].PHP_EOL;
@@ -999,6 +1004,8 @@ class IO_HEIF {
                 }
             break;
             case "url ":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"], 8 * 3);
                 $bit->putData($box["location"]);
                 break;
             case "ispe":
