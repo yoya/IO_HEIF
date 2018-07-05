@@ -10,7 +10,7 @@ $options = getopt("f:p:d");
 
 if ((isset($options['f']) === false) || (is_readable($options['f']) === false) || (isset($options['p']) === false) || (is_readable($options['p']) === false) ) {
     fprintf(STDERR, "Usage: php heifaddicpp.php -f <heif_file> -p <iccp_profile> [-d]\n");
-    fprintf(STDERR, "ex) php heifaddiccp.php -f test.heic -t sRGB.icc\n");
+    fprintf(STDERR, "ex) php heifaddiccp.php -f test.heic -p sRGB.icc\n");
     exit(1);
 }
 
