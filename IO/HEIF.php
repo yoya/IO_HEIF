@@ -251,32 +251,57 @@ class IO_HEIF {
             $box["levelIdc"] = $bit->getUI8();
             $reserved = $bit->getUIBits(4);
             if ($reserved !== 0xF) {
-                var_dump($box);
-                throw new Exception("reserved({$reserved}) !== 0xF");
+                $mesg = "reserved({$reserved}) !== 0xF at L%d";
+                if (empty($opts['restrict'])) {
+                    fprintf(STDERR, $mesg.PHP_EOL, __LINE__);
+                } else {
+                    var_dump($box);
+                    throw new Exception($mesg);
+                }
             }
             $box["minSpatialSegmentationIdc"]  = $bit->getUIBits(12);
             $reserved = $bit->getUIBits(6);
             if ($reserved !== 0x3F) {
-                var_dump($box);
-                throw new Exception("reserved({$reserved}) !== 0x3F");
+                $mesg = "reserved({$reserved}) !== 0x3F at L%d";
+                if (empty($opts['restrict'])) {
+                    fprintf(STDERR, $mesg.PHP_EOL, __LINE__);
+                } else {
+                    var_dump($box);
+                    throw new Exception($mesg);
+                }
             }
             $box["parallelismType"]  = $bit->getUIBits(2);
             $reserved = $bit->getUIBits(6);
             if ($reserved !== 0x3F) {
-                var_dump($box);
-                throw new Exception("reserved({$reserved}) !== 0x3F");
+                $mesg = "reserved({$reserved}) !== 0x3F at L%d";
+                if (empty($opts['restrict'])) {
+                    fprintf(STDERR, $mesg.PHP_EOL, __LINE__);
+                } else {
+                    var_dump($box);
+                    throw new Exception($mesg);
+                }
             }
             $box["chromaFormat"]  = $bit->getUIBits(2);
             $reserved = $bit->getUIBits(5);
             if ($reserved !== 0x1F) {
-                var_dump($box);
-                throw new Exception("reserved({$reserved}) !== 0x1F");
+                $mesg = "reserved({$reserved}) !== 0x1F at L%d";
+                if (empty($opts['restrict'])) {
+                    fprintf(STDERR, $mesg.PHP_EOL, __LINE__);
+                } else {
+                    var_dump($box);
+                    throw new Exception($mesg);
+                }
             }
             $box["bitDepthLumaMinus8"]  = $bit->getUIBits(3);
             $reserved = $bit->getUIBits(5);
             if ($reserved !== 0x1F) {
-                var_dump($box);
-                throw new Exception("reserved({$reserved}) !== 0x1F");
+                $mesg = "reserved({$reserved}) !== 0x1F at L%d";
+                if (empty($opts['restrict'])) {
+                    fprintf(STDERR, $mesg.PHP_EOL, __LINE__);
+                } else {
+                    var_dump($box);
+                    throw new Exception($mesg);
+                }
             }
             $box["bitDepthChromaMinus8"]  = $bit->getUIBits(3);
             $box["avgFrameRate"]  = $bit->getUIBits(16);
@@ -294,7 +319,7 @@ class IO_HEIF {
                 if ($reserved !== 0) {
                     var_dump($box);
                     var_dump($nalArrays);
-                    throw new Exception("reserved({$reserved}) !== 0");
+                    throw new Exception("reserved({$reserved}) !== 0 at L%d");
                 }
                 $nal["NALUnitType"] = $bit->getUIBits(6);
                 $nal["numNalus"] = $numNalus = $bit->getUI16BE();

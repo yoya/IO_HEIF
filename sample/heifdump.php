@@ -6,7 +6,7 @@ if (is_readable('vendor/autoload.php')) {
     require_once 'IO/HEIF.php';
 }
 
-$options = getopt("f:hvtd");
+$options = getopt("f:hvtdR");
 
 if ((isset($options['f']) === false) || (($options['f'] !== "-") && is_readable($options['f']) === false)) {
     fprintf(STDERR, "Usage: php heifdump.php -f <heif_file> [-htvd]\n");
@@ -34,6 +34,9 @@ if (isset($options['v'])) {
 }
 if (isset($options['d'])) {
     $opts['debug'] = true;
+}
+if (isset($options['r'])) {
+    $opts['restrict'] = true;
 }
 
 $heif = new IO_HEIF();
