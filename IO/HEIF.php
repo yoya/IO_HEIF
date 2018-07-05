@@ -1127,10 +1127,14 @@ class IO_HEIF {
                 }
                 break;
             case "mdat":
-                $this->mdatOffsetList []= [
-                    "_mdatId" => $box["_mdatId"],
-                    "_offset" => $boxOffset,
-                ];
+                if (isset($box["_mdatId"])) {
+                    $this->mdatOffsetList []= [
+                        "_mdatId" => $box["_mdatId"],
+                        "_offset" => $boxOffset,
+                    ];
+                } else {
+                    fwrite(STDERR, "ERROR mdat no _mdatId".PHP_EOL);
+                }
                 if (isset($box["data"])) {
                     $data = $box["data"];
                 } else {
