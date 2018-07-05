@@ -1099,6 +1099,21 @@ class IO_HEIF {
                     }
                 }
                 break;
+            case "colr":
+                $bit->putData($box["subtype"], 4);
+                $bit->putData($box["data"]);
+                break;
+            case "pixi":
+                $bit->putUI8($box["version"]);
+                $bit->putUIBits($box["flags"], 8 * 3);
+                $channelArray = $box["channelArray"];
+                $channelCount = count($channelArray);
+                $box["channelCount"] = $channelCount;
+                $bit->putUI8($channelCount);
+                for ($i = 0 ; $i < $channelCount ; $i++) {
+                    $bit->getUI8($channelArray[$i]["bitsPerChannel"]);
+                }
+            break;
             case "clap":
                 $bit->putSI32BE($box["width_N"]);
                 $bit->putSI32BE($box["width_D"]);
