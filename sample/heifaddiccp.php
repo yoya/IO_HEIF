@@ -24,8 +24,8 @@ if (isset($options['d'])) {
     $opts['debug'] = true;
 }
 
-
 $heif = new IO_HEIF();
+
 try {
     $heif->parse($heifdata, $opts);
 } catch (Exception $e) {
@@ -36,5 +36,4 @@ try {
 }
 
 $heif->appendICCProfile($iccpdata);
-
 echo $heif->build($opts);

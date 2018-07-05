@@ -813,6 +813,37 @@ class IO_HEIF {
         }
         return array_values($boxList);
     }
+    function appendICCProfile($iccpData) {
+        $context = [];
+        $this->boxTree = $this->appendICCProfile_r($this->boxTree, $iccpData, $context);
+    }
+    function appendICCProfile_r($boxList, $iccpData, &$context) {
+        foreach ($boxList as $idx => &$box) {
+            switch ($box["type"]) {
+            case "ipco":
+                $colr = ["type" => "colr",
+                         "subtype" => "prof", "data" => $iccpData];
+                $box["boxList"][] = $colr;
+                $box["boxList"] = array_values($box["boxList"]);
+                $context["ipco"] = $box;
+                break;
+            case "ipma":
+                $colrIndex = count($context["ipco"]["boxList"]); // 1 origin
+                foreach ($box["entryArray"] as &$entry) {
+                    $entry["associationArray"][] = [
+                        "essential" => 1, "propertyIndex" => $colrIndex
+                    ];
+                }
+                break;
+            default:
+                if (isset($box["boxList"])) {
+                    $boxList[$idx]["boxList"] = $this->appendICCProfile_r($box["boxList"], $iccpData, $context);
+                }
+            }
+        }
+        return $boxList;
+    }
+
     function build($opts = array()) {
         // for iloc => mdat linkage
         $this->ilocBaseOffsetFieldList = []; // _mdatId, _offsetRelative, fieldOffset, fieldSize
