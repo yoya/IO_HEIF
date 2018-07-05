@@ -87,7 +87,11 @@ class IO_HEIF {
             foreach ($iloc["itemArray"] as &$item) {
                 $itemID = $item["itemID"];
                 if (isset($item["baseOffset"])) {
-                    $offset = $item["baseOffset"];
+                    if ($item["baseOffset"] > 0) {
+                        $offset = $item["baseOffset"];
+                    } else {
+                        $offset = $item["extentArray"][0]["extentOffset"];
+                    }
                     $mdatStart = $mdat["_offset"];
                     $mdatNext = $mdatStart + $mdat["_length"];
                     if (($mdatStart <= $offset) && ($offset < $mdatNext)) {
