@@ -69,6 +69,19 @@ function getChromeFormatDescription($format) {
     return "Unknown Chroma Format";
 }
 
+// https://www.itu.int/rec/T-REC-H.265-201304-S
+function getProfileIdcDescription($idc) {
+    static $profileIdcDescription = [
+        1 => "Main profile",
+        2 => "Main 10 profile",
+        3 => "Main Still Picture profile",
+    ];
+    if (isset($profileIdcDescription[$idc])) {
+        return $profileIdcDescription[$idc];
+    }
+    return "Unknown Profile";
+}
+
 class IO_HEIF {
     var $_chunkList = null;
     var $_heifdata = null;
@@ -676,7 +689,7 @@ class IO_HEIF {
             break;
         case "hvcC":
             $profileIdc = $box["profileIdc"];
-            $profileIdcStr = ($profileIdc===1)?"Main profile":(($profileIdc===2)?"Main10 profile":"unknown profile");
+            $profileIdcStr = getProfileIdcDescription($profileIdc);
             $this->printfBox($box, $indentSpace."  version:%d profileSpace:%d tierFlag:%x profileIdc:%d");
             echo "($profileIdcStr)".PHP_EOL;
             $this->printfBox($box, $indentSpace."  profileCompatibilityFlags:0x%x".PHP_EOL);
