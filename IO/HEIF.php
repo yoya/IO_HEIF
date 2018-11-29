@@ -596,6 +596,7 @@ class IO_HEIF {
         }
     }
     function dumpBox($box, $opts) {
+        echo str_repeat("--- ", 1 + $opts["indent"]).PHP_EOL;
         $type = $box["type"];
         $indentSpace = str_repeat(" ", $opts["indent"] * 4);
         if (! empty($opts["typeonly"])) {
