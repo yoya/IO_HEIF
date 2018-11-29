@@ -162,7 +162,7 @@ class IO_HEIF {
     
     function parseBox($bit, $parentType, $opts) {
         list($boxOffset, $dummy) = $bit->getOffset();
-        $indentSpace = str_repeat(" ", ($opts["indent"]-1) * 4);
+        $indentSpace = str_repeat("    ", $opts["indent"] - 1);
         $boxLength = $bit->getUI32BE();
         if ($boxLength <= 1) {
             $boxLength = null;
@@ -596,9 +596,8 @@ class IO_HEIF {
         }
     }
     function dumpBox($box, $opts) {
-        echo str_repeat("--- ", 1 + $opts["indent"]).PHP_EOL;
         $type = $box["type"];
-        $indentSpace = str_repeat(" ", $opts["indent"] * 4);
+        $indentSpace = str_repeat("    ", $opts["indent"]);
         if (! empty($opts["typeonly"])) {
             $this->printfBox($box, $indentSpace."type:%s");
             if (isset($box["version"])) {
@@ -614,8 +613,11 @@ class IO_HEIF {
             }
             return ;
         }
-
-        echo $indentSpace."type:".$type."(offset:".$box["_offset"]." len:".$box["_length"]."):";
+        if (empty($opts["indent"])) {
+            echo "|".PHP_EOL;
+        }
+        $indentSpaceType = str_repeat("|-", $opts["indent"]) . str_repeat("  ", $opts["indent"]);
+        echo $indentSpaceType."type:".$type."(offset:".$box["_offset"]." len:".$box["_length"]."):";
         $desc = getTypeDescription($type);
         if ($desc) {
             echo $desc;
