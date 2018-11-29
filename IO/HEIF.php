@@ -17,27 +17,27 @@ function getTypeDescription($type) {
     // http://mp4ra.org/atoms.html
     // https://developer.apple.com/videos/play/wwdc2017/513/
     static $getTypeDescriptionTable = [
-        "ftyp" => "File Type and Compatibility",
+        "ftyp" => "File Type and compatibility",
         "meta" => "Information about items",
         "mdat" => "Media Data",
-        "moov" => "MovieBox",
+        "moov" => "Movie Box",
         //
         "hdlr" => "Handler reference",
-        "pitm" => "Prinary item referene",
-        "iloc" => "Item location",
-        "iinf" => "Item information",
-        "infe" => "Item information entry",
+        "pitm" => "Prinary Item reference",
+        "iloc" => "Item Location",
+        "iinf" => "Item Information",
+        "infe" => "Item Information Entry",
         //
-        "dinf" => "Data information Box",
-        "dref" => "Data Referenve Box",
+        "dinf" => "Data Information Box",
+        "dref" => "Data Reference Box",
         "url " => "Data Entry Url Box",
         "urn " => "Data Entry Urn Box",
         //
         "iref" => "Item Reference Box",
         "dimg" => "Derived Image",
         "thmb" => "Thumbnail",
-        "auxl" => "Auxiliary Imagel",
-        "cdsc" => "Content describe",
+        "auxl" => "Auxiliary image",
+        "cdsc" => "Content Describe",
         //
         "iprp" => "Item Properties",
         "ipco" => "Item Property Container",
