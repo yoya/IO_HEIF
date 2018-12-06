@@ -47,6 +47,7 @@ function getTypeDescription($type) {
         "colr" => "Colour Information", // ICC profile
         "pixi" => "Pixel Information",
         "clap" => "Clean Aperture",
+        "irot" => "Image Rotation",
         //
         "ipma" => "Item Properties Association",
     ];
@@ -445,6 +446,10 @@ class IO_HEIF {
             $box["vertOff_N"] = $bit->getSI32BE();
             $box["vertOff_D"] = $bit->getSI32BE();
             break;
+        case "irot":
+            $bit->getUIBits(6); // reserved
+            $box["angle"] = $bit->getUIBits(2);
+            break;
         case "ipma":
             $box["version"] = $bit->getUI8();
             $box["flags"] = $bit->getUIBits(8 * 3);
@@ -652,6 +657,9 @@ class IO_HEIF {
         case "clap":
             $this->printfBox($box, $indentSpace."  width_N:%d / width_D:%d  height_N:%d / height_D:%d".PHP_EOL);
             $this->printfBox($box, $indentSpace."  horizOff_N:%d / horizOff_D:%d  vertOff_N:%d / vertOff_D:%d".PHP_EOL);
+            break;
+        case "irot":
+            $this->printfBox($box, $indentSpace."  angle:%d".PHP_EOL);
             break;
         case "ipma":
             $this->printfBox($box, $indentSpace."  version:%d flags:%d".PHP_EOL);
@@ -1170,6 +1178,10 @@ class IO_HEIF {
                 $bit->putSI32BE($box["horizOff_D"]);
                 $bit->putSI32BE($box["vertOff_N"]);
                 $bit->putSI32BE($box["vertOff_D"]);
+                break;
+            case "irot":
+                $bit->putUIBits(0, 6); // reserved
+                $bit->putUIBits($box["angle"], 2);
                 break;
             case "ipma":
                 $bit->putUI8($box["version"]);
