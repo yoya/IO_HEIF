@@ -49,6 +49,4 @@ try {
     exit (1);
 }
 
-
-
 $heif->dump($opts);
