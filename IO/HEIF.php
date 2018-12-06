@@ -87,6 +87,8 @@ class IO_HEIF {
     var $_chunkList = null;
     var $_heifdata = null;
     var $boxTree = [];
+    var $propTree = null;
+    var $itemTree = null;
     function parse($heifdata, $opts = array()) {
         $opts["indent"] = 0;
         $bit = new IO_Bit();
@@ -1372,5 +1374,161 @@ class IO_HEIF {
             $buildInfo += $this->getHEIFBuildInfo($box["boxList"]);
         }
         return $buildInfo;
+    }
+
+    function getBoxesByTypes($types) {
+        $params = ['types' => $types, 'boxes' => []];
+        $this->applyFunctionToBoxTree($this->boxTree, function($box, &$params) {
+            if (in_array($box["type"], $params["types"])) {
+                $params["boxes"] []= $box;
+            }
+        }, $params);
+        return $params["boxes"];
+    }
+
+    function analyzeProps($boxList) {
+        $ipcoBox = $this->getBoxesByTypes(["ipco"]);
+        $propTree = [];
+        foreach ($ipcoBox[0]["boxList"] as $i => $box) {
+            $type = $box["type"];
+            $index = $i + 1; // 1 origin
+            $prop = [];
+            switch ($type) {
+            case "irot":
+                $prop = ["angle" => $box["angle"]];
+                break;
+            case "colr":
+                $prop = ["subtype" => $box["subtype"]];
+                break;
+            case "hvcC":
+                $prop = ["profile" => $box["profileIdc"],
+                         "level" => $box["levelIdc"],
+                         "chroma" => $box["chromaFormat"]];
+                break;
+            case "ispe":
+                $prop = ["width" => $box["width"],
+                         "height" => $box["height"]];
+                break;
+            case "pixi":
+                $channels = $box["channelArray"];
+                $prop = ["channels" => [$channels[0]["bitsPerChannel"],
+                                        $channels[1]["bitsPerChannel"],
+                                        $channels[2]["bitsPerChannel"]]
+                         ];
+                break;
+            }
+            $propTree[$index][$type] = $prop;
+        }
+        //
+        $this->propTree = $propTree;
+    }
+
+    function analyzeItems($boxList) {
+        $itemTree = [];
+        //
+        $infeBoxes = $this->getBoxesByTypes(["infe"]);
+        foreach ($infeBoxes as $box) {
+            $itemID  = $box["itemID"];
+            $itemTree[$itemID] = [];
+            $itemTree[$itemID]["infe"] = ["type" => $box["itemType"]];
+        }
+        $roleBoxes = $this->getBoxesByTypes(["pitm", "thmb", "dimg", "cdsc"]);
+        foreach ($roleBoxes as $box) {
+            $type = $box["type"];
+            switch ($type) {
+            case "pitm":
+                $itemID = $box["itemID"];
+                $itemTree[$itemID][$type] = [];
+                break;
+            case "thmb":
+            case "cdsc":
+                $fromItemID = $box["fromItemID"];
+                foreach ($box["itemArray"] as $item) {
+                    $itemID = $item["itemID"];
+                    $itemTree[$fromItemID][$type] = ["from" => $itemID];
+                }
+                break;
+            case "dimg":
+                $fromItemID= $box["fromItemID"];
+                foreach ($box["itemArray"] as $item) {
+                    $itemID = $item["itemID"];
+                    $itemTree[$itemID][$type] = ["from" => $fromItemID];
+                }
+                break;
+            }
+        }
+        $ilocBoxes = $this->getBoxesByTypes(["iloc"]);
+        foreach ($ilocBoxes as $ilocBox) {
+            foreach ($ilocBox['itemArray'] as $item) {
+                $itemID = $item["itemID"];
+                $method = $item["constructionMethod"];
+                $reference = $item["dataReferenceIndex"];
+                $offset = $item["baseOffset"];
+                foreach ($item["extentArray"] as $extent) {
+                    if (($offset === 0) && ($extent["extentOffset"])) {
+                        $offset = $extent["extentOffset"];
+                    }
+                    $length = $extent["extentLength"];
+                }
+                $itemTree[$itemID]["iloc"] = ["method"    => $method,
+                                              "reference" => $reference,
+                                              "offset"    => $offset,
+                                              "length"    => $length];
+            }
+        }
+        //
+        $this->itemTree = $itemTree;
+    }
+    function analyze() {
+        $this->analyzeProps($this->boxTree);
+        $this->analyzeItems($this->boxTree);
+    }
+    function tree($opts = array()) {
+        if (is_null($this->propTree) || is_null($this->itemTree)) {
+            $this->analyze();
+        }
+        echo "Props:".PHP_EOL;
+        foreach ($this->propTree as $index => $prop) {
+            $types = array_keys($prop);
+            assert (count($types) === 1);
+            $type = $types[0];
+            echo "[$index]: ".$type;
+            switch ($type) {
+            case "colr":
+                echo " subtype:".$prop[$type]["subtype"];
+                break;
+            case "hvcC":
+                echo " profile:".$prop[$type]["profile"]." level:".$prop[$type]["level"]." chroma:".$prop[$type]["chroma"];
+                break;
+            case "pixi":
+                echo " bits:".implode(",", $prop[$type]["channels"]);
+                break;
+            case "irot":
+                echo " angle:".$prop[$type]["angle"];
+                break;
+            case "ispe":
+                echo " width:".$prop[$type]["width"]." height:".$prop[$type]["height"];
+                break;
+            }
+            echo PHP_EOL;
+        }
+        echo "Items:".PHP_EOL;
+        foreach ($this->itemTree as $itemID => $item) {
+            echo "[$itemID]:";
+            foreach (["pitm", "dimg", "thmb", "cdsc"] as $type) {
+                if (isset($item[$type])) {
+                    echo " ".$type;
+                    if (isset($item[$type]["from"])) {
+                        echo " from:".$item[$type]["from"];
+                    }
+                }
+            }
+            echo " type:".$item["infe"]["type"];
+            if (isset($item["iloc"])) {
+                $iloc = $item["iloc"];
+                echo " method:".$iloc["method"]." ref:".$iloc["reference"]." offset:".$iloc["offset"]." length:".$iloc["length"];
+            }
+            echo PHP_EOL;
+        }
     }
 }
