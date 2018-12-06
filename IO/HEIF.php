@@ -411,6 +411,7 @@ class IO_HEIF {
             $box["boxList"] = $this->parseBoxList($bit, $dataLen, $type, $opts);
             break;
         case "thmb":
+        case "cdsc":
             $box["fromItemID"] = $bit->getUI16BE();
             $box["itemCount"] = $bit->getUI16BE();
             $itemIDArray = [];
@@ -638,6 +639,7 @@ class IO_HEIF {
             echo "  width:".$box["width"]." height:".$box["height"].PHP_EOL;
             break;
         case "thmb":
+        case "cdsc":
             $this->printfBox($box, $indentSpace."  fromItemID:%d".PHP_EOL);
             $this->printfBox($box, $indentSpace."  itemCount:%d".PHP_EOL);
             foreach ($box["itemArray"] as $item) {
@@ -1106,7 +1108,16 @@ class IO_HEIF {
                 $bit->putUI8($box["version"]);
                 $bit->putUIBits($box["flags"], 8 * 3);
                 $bit->putUI16BE($box["itemID"]);
-            break;
+                break;
+            case "thmb":
+            case "cdsc":
+                $bit->putUI16BE($box["fromItemID"]);
+                $box["itemCount"] = count($box["itemArray"]);
+                $bit->putUI16BE($box["itemCount"]);
+                foreach ($box["itemArray"] as $item) {
+                    $bit->putUI16BE($item["itemID"]);
+                }
+                break;
             case "hvcC":
                 $bit->putUI8($box["version"]);
                 $bit->putUIBits($box["profileSpace"], 2);
