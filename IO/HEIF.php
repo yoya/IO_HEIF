@@ -1048,12 +1048,14 @@ class IO_HEIF {
                             }
                             $bit->putUIBits($extent["extentLength"] , 8 * $lengthSize);
                         }
-                        $this->ilocBaseOffsetFieldList []= [
-                            "_mdatId" => $item["_mdatId"],
-                            "_offsetRelative" => $item["_offsetRelative"],
-                            "fieldOffset" => $fieldOffset,
-                            "baseOffsetSize" => $baseOffsetSize,
-                        ];
+                        if (isset($item["_mdatId"])) {
+                            $this->ilocBaseOffsetFieldList []= [
+                                "_mdatId" => $item["_mdatId"],
+                                "_offsetRelative" => $item["_offsetRelative"],
+                                "fieldOffset" => $fieldOffset,
+                                "baseOffsetSize" => $baseOffsetSize,
+                            ];
+                        }
                     }
                 }
                 break;
