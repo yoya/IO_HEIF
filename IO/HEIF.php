@@ -1076,7 +1076,7 @@ class IO_HEIF {
                      $bit->putData($contentType."\0");
                      if (isset($box["contentEncoding"])) {
                          $contentEncoding = explode("\0", $box["contentEncoding"] )[0];
-                         $bit->getData($contentEncoding."\0");
+                         $bit->putData($contentEncoding."\0");
                      }
                  }
                 break;
@@ -1179,7 +1179,7 @@ class IO_HEIF {
                 $box["channelCount"] = $channelCount;
                 $bit->putUI8($channelCount);
                 for ($i = 0 ; $i < $channelCount ; $i++) {
-                    $bit->getUI8($channelArray[$i]["bitsPerChannel"]);
+                    $bit->putUI8($channelArray[$i]["bitsPerChannel"]);
                 }
             break;
             case "clap":
