@@ -38,6 +38,25 @@ type:meta(offset:139706 len:328):Information about items
 (omit...)
 ```
 
+- heiftree.php
+
+```
+% php sample/heiftree.php -f input.heic
+Props:
+[1]: colr subtype:prof
+[2]: hvcC profile:3 level:90 chroma:1
+[3]: ispe width:512 height:512
+(omit...)
+Items:
+[1]: dimg from:49 type:hvc1 method:0 ref:0 offset:28986 length:13529
+[2]: dimg from:49 type:hvc1 method:0 ref:0 offset:42515 length:20507
+(omit...)
+[48]: dimg from:49 type:hvc1 method:0 ref:0 offset:804455 length:14580
+[49]: pitm type:grid method:1 ref:0 offset:0 length:8
+[50]: thmb from:49 type:hvc1 method:0 ref:0 offset:3995 length:22809
+[51]: cdsc from:49 type:Exif method:0 ref:0 offset:26804 length:2182
+```
+
 - heiffromhevc.php
 
 ```
