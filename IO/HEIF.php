@@ -1488,7 +1488,7 @@ class IO_HEIF {
         foreach ($ilocBoxes as $ilocBox) {
             foreach ($ilocBox['itemArray'] as $item) {
                 $itemID = $item["itemID"];
-                $method = $item["constructionMethod"];
+                $method = isset($item["constructionMethod"])?$item["constructionMethod"]:null;
                 $reference = $item["dataReferenceIndex"];
                 $offset = $item["baseOffset"];
                 foreach ($item["extentArray"] as $extent) {
@@ -1497,10 +1497,12 @@ class IO_HEIF {
                     }
                     $length = $extent["extentLength"];
                 }
-                $itemTree[$itemID]["iloc"] = ["method"    => $method,
-                                              "reference" => $reference,
+                $itemTree[$itemID]["iloc"] = ["reference" => $reference,
                                               "offset"    => $offset,
                                               "length"    => $length];
+                if (! is_null($method)) {
+                    $itemTree[$itemID]["iloc"]["method"] = $method;
+                }
             }
         }
         $ipmaBoxes = $this->getBoxesByTypes(["ipma"]);
@@ -1572,7 +1574,10 @@ class IO_HEIF {
             echo " type:".$item["infe"]["type"];
             if (isset($item["iloc"])) {
                 $iloc = $item["iloc"];
-                echo " method:".$iloc["method"]." ref:".$iloc["reference"]." offset:".$iloc["offset"]." length:".$iloc["length"];
+                if (isset($iloc["method"])) {
+                    echo " method:".$iloc["method"];
+                }
+                echo " ref:".$iloc["reference"]." offset:".$iloc["offset"]." length:".$iloc["length"];
             }
             echo PHP_EOL;
             if (isset($item["ipma"])) {
