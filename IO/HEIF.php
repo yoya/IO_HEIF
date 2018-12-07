@@ -10,6 +10,7 @@ if (is_readable('vendor/autoload.php')) {
     require 'vendor/autoload.php';
 } else {
     require_once 'IO/Bit.php';
+    require_once 'IO/ICC.php';
 }
 require_once dirname(__FILE__).'/HEIF/HEVC.php';
 
@@ -1398,7 +1399,34 @@ class IO_HEIF {
                 $prop = ["angle" => $box["angle"]];
                 break;
             case "colr":
-                $prop = ["subtype" => $box["subtype"]];
+                $subtype = $box["subtype"];
+                $prop = ["subtype" => $subtype];
+                if ($subtype === "prof") {
+                    $data = $box["data"];
+                    $icc = new IO_ICC();
+                    try {
+                        $icc->parse($data);
+                        $desc = null;
+                        foreach ($icc->_tags as $tag) {
+                            echo $tag->signature ."--- \n";
+                            if ($tag->signature === "desc") {
+                                if ($tag->parseTagContent()) {
+                                    if ($tag->tag->ascii) {
+                                        $desc = $tag->tag->ascii;
+                                        break;
+                                    } else if ($tag->tag->records &&
+                                               $tag->tag->records["String"]) {
+                                        $desc = $tag->tag->records["String"];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception $e) {
+                        $desc = "illegal icc profile";
+                    }
+                    $prop["prof"] = $desc;
+                }
                 break;
             case "hvcC":
                 $prop = ["profile" => $box["profileIdc"],
@@ -1507,7 +1535,11 @@ class IO_HEIF {
             echo "[$index]: ".$type;
             switch ($type) {
             case "colr":
-                echo " subtype:".$prop[$type]["subtype"];
+                $subtype = $prop[$type]["subtype"];
+                echo " subtype:".$subtype;
+                if ($subtype === "prof") {
+                    echo " prof:".$prop[$type]["prof"];
+                }
                 break;
             case "hvcC":
                 $profile = $prop[$type]["profile"];
