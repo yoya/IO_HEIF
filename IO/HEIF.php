@@ -1476,6 +1476,18 @@ class IO_HEIF {
                                               "length"    => $length];
             }
         }
+        $ipmaBoxes = $this->getBoxesByTypes(["ipma"]);
+        foreach ($ipmaBoxes as $box) {
+            foreach ($box['entryArray'] as $entry) {
+                $itemID = $entry["itemID"];
+                $propIndices = [];
+                foreach ($entry['associationArray'] as $assoc) {
+                    $propIndices []= ["essential" => $assoc["essential"],
+                                      "index" => $assoc["propertyIndex"]];
+                }
+                $itemTree[$itemID]["ipma"] = $propIndices;
+            }
+        }
         //
         $this->itemTree = $itemTree;
     }
@@ -1498,10 +1510,13 @@ class IO_HEIF {
                 echo " subtype:".$prop[$type]["subtype"];
                 break;
             case "hvcC":
-                echo " profile:".$prop[$type]["profile"]." level:".$prop[$type]["level"]." chroma:".$prop[$type]["chroma"];
+                $profile = $prop[$type]["profile"];
+                $level = $prop[$type]["level"];
+                $chroma = $prop[$type]["chroma"];
+                echo " profile:".$profile."(".getProfileIdcDescription($profile).") level:".$level." chroma:".$chroma."(".getChromeFormatDescription($chroma).")";
                 break;
             case "pixi":
-                echo " bits:".implode(",", $prop[$type]["channels"]);
+                echo " channels:".implode(",", $prop[$type]["channels"]);
                 break;
             case "irot":
                 echo " angle:".$prop[$type]["angle"];
@@ -1519,7 +1534,7 @@ class IO_HEIF {
                 if (isset($item[$type])) {
                     echo " ".$type;
                     if (isset($item[$type]["from"])) {
-                        echo " from:".$item[$type]["from"];
+                        echo ":".$item[$type]["from"];
                     }
                 }
             }
@@ -1529,6 +1544,39 @@ class IO_HEIF {
                 echo " method:".$iloc["method"]." ref:".$iloc["reference"]." offset:".$iloc["offset"]." length:".$iloc["length"];
             }
             echo PHP_EOL;
+            if (isset($item["ipma"])) {
+                $propIndices = $item["ipma"];
+                echo "    ";
+                foreach ($propIndices as $index) {
+                    $i = $index["index"];
+                    echo " [".$i;
+                    echo $index["essential"]?"":"?";
+                    echo "]";
+                    $prop = $this->propTree[$i];
+                    $types = array_keys($prop);
+                    assert (count($types) === 1);
+                    $type = $types[0];
+                    echo $type;
+                    switch ($type) {
+                    case "irot":
+                        echo ":".$prop[$type]["angle"];
+                        break;
+                    case "ispe":
+                        echo ":".$prop[$type]["width"].",".$prop[$type]["height"];
+                        break;
+                    case "colr":
+                        echo ":".$prop[$type]["subtype"];
+                        break;
+                    case "hvcC":
+                        echo ":".$prop[$type]["profile"].",".$prop[$type]["level"].",".$prop[$type]["chroma"];
+                        break;
+                    case "pixi":
+                        echo ":".implode(",", $prop[$type]["channels"]);
+                        break;
+                    }
+                }
+                echo PHP_EOL;
+            }
         }
     }
 }
