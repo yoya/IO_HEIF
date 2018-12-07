@@ -1,7 +1,7 @@
 <?php
 
 /*
-  IO_HEIF class - v1.9
+  IO_HEIF class - v1.10
   (c) 2017/07/26 yoya@awm.jp
   ref) https://developer.apple.com/standards/qtff-2001.pdf
  */
