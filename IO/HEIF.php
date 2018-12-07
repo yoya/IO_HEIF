@@ -1408,7 +1408,6 @@ class IO_HEIF {
                         $icc->parse($data);
                         $desc = null;
                         foreach ($icc->_tags as $tag) {
-                            echo $tag->signature ."--- \n";
                             if ($tag->signature === "desc") {
                                 if ($tag->parseTagContent()) {
                                     if ($tag->tag->ascii) {
