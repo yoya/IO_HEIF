@@ -16,13 +16,15 @@ bidirectional converter with H.265/HEVC
  - https://github.com/yoya/IO_Bit
 - IO_HEVC
  - https://github.com/yoya/IO_HEVC
+- IO_ICC
+ - https://github.com/yoya/IO_ICC
 
 ## script (sample/*.php)
 
 - heifdump.php
 
 ```
-% php sample/heifdump.php -f test.heic
+% php vendor/yoya/io_heif/sample/heifdump.php -f input.heic
 type:ftyp(offset:0 len:24):File Type and Compatibility
   major:mif1 minor:0  alt:mif1, heic
 type:mdat(offset:24 len:139682):Media Data
@@ -41,7 +43,7 @@ type:meta(offset:139706 len:328):Information about items
 - heiftree.php
 
 ```
-% php sample/heiftree.php -f input.heic
+% php vendor/yoya/io_heif/sample/heiftree.php -f input.heic
 Props:
 [1]: colr subtype:prof
 [2]: hvcC profile:3 level:90 chroma:1
@@ -60,11 +62,11 @@ Items:
 - heiffromhevc.php
 
 ```
-% php sample/heiffromhevc.php -f input.hevc > output.heic
+% php vendor/yoya/io_heif/sample/heiffromhevc.php -f input.hevc > output.heic
 ```
 
 - heiftohevc.php
 
 ```
-% php sample/heiftohevc.php -f input.heic > output.hevc
+% php vendor/yoya/io_heif/sample/heiftohevc.php -f input.heic > output.hevc
 ```
