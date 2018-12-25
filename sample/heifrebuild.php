@@ -21,7 +21,7 @@ $heif = new IO_HEIF();
 try {
     $heif->parse($heifdata);
 } catch (Exception $e) {
-    echo "ERROR: heifdump: $filename:".PHP_EOL;
+    echo "ERROR: heifrebuild: $filename:".PHP_EOL;
     echo $e->getMessage()." file:".$e->getFile()." line:".$e->getLine().PHP_EOL;
     echo $e->getTraceAsString().PHP_EOL;
     exit (1);
