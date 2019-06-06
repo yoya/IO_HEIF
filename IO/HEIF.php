@@ -97,4 +97,54 @@ class IO_HEIF extends IO_ISOBMFF {
             }
         }
     }
+    function getHEIFBuildInfo($boxList) {
+        $buildInfo = array();
+        foreach ($boxList as $box) {
+            $buildInfo += $this->getHEIFBuildInfoBox($box);
+        }
+        return $buildInfo;
+    }
+    function getHEIFBuildInfoBox($box) {
+        $buildInfo = array();
+        switch ($box["type"]) {
+        case "ipma":
+            $entryArray = array();
+            foreach ($box["entryArray"] as $entry) {
+                $entryArray[$entry["itemID"]] = true;
+            }
+            $buildInfo += array("ipma" => $entryArray);
+            break;
+        case "iloc":
+            $itemArray = array();
+            foreach ($box["itemArray"] as $item) {
+                $extentLength = 0;
+                foreach ($item["extentArray"] as $extent) {
+                    $extentLength += $extent["extentLength"];
+                }
+                $itemArray[$item["itemID"]] = array(
+                    "baseOffset" => $item["baseOffset"],
+                    "extentLength" => $extentLength,
+                );
+            }
+            $buildInfo += array("iloc" => $itemArray);
+            break;
+        case "hvcC":
+            $nalArray = array();
+            foreach ($box["nalArrays"] as $nal) {
+                $nalUnit = "";
+                foreach ($nal["nalus"] as $nu) {
+                    $nalUnit .= $nu["nalUnit"];
+                }
+                $nalArray[$nal["NALUnitType"]] = $nalUnit;
+            }
+            $buildInfo += array("hvcC" => array(
+                "nals" => $nalArray,
+            ));
+            break;
+        }
+        if (isset($box["boxList"])) {
+            $buildInfo += $this->getHEIFBuildInfo($box["boxList"]);
+        }
+        return $buildInfo;
+    }
 }
