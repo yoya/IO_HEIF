@@ -1,7 +1,7 @@
 <?php
 
 /*
-  IO_HEIF class - v2.0
+  IO_HEIF class - v2.1
   (c) 2017/07/26 yoya@awm.jp
   ref) https://mpeg.chiariglione.org/standards/mpeg-h/image-file-format
  */
