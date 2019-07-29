@@ -92,51 +92,84 @@ class IO_HEIF extends IO_ISOBMFF {
             case "thumbnail":
             case "thmb":
                 $thmbArr = $this->getBoxesByTypes(["thmb"]);
-                if (count($thmbArr)  > 1) {
-                    ////////////////
+                if (count($thmbArr) !== 1) {
+                    throw new Exception("toHEVC: count(thmbArr) must be 1");
                 }
                 $itemID = $thmbArr[0]["itemID"];
                 break;
             case "auxiliary":
             case "auxl":
             case "aux":
-                $auxlArr = $this->getBoxesByTypes(["auxl"]);
-                // urn:mpeg:hevc:2015:auxid:1 : transparent
-                // urn:mpeg:hevc:2015:auxid:2 : depthmap
-                if (! is_null(isset($opts["urn"]))) {
-                    //
-                    exit (0);
+                // urn:mpeg:hevc:2015:auxid:1 - transparent
+                // urn:mpeg:hevc:2015:auxid:2 - depthmap
+                // iphone depthmap
+                // urn:com:apple:photo:2018:aux:portraiteffectsmatte"
+                if (! isset($opts["urn"])) {
+                    throw new Exception("toHEVC: auxiliary need to specify urn");
                 }
-                $itemId = $auxlArr[0]["itemID"];
+                $auxCBoxes = $buildInfo["auxC"];
+                foreach ($auxCBoxes as $i => $auxC) {
+                    if ($auxC["auxType"] == $opts["urn"]) {
+                        $itemID = $i;
+                        break;
+                    }
+                }
                 break;
             default:
-                ////////////////
+                throw new Exception("toHEVC: unknown role type:".$opts["RoleType"]);
             } 
         }
+        if (is_null($itemID)) {
+            throw new Exception("toHEVC: can't found itemID");
+        }
         $loc = $buildInfo["iloc"][$itemID];
-        foreach ($buildInfo["hvcC"]["nals"] as $nal) {
+        $hvcC = $buildInfo["hvcC"][$itemID];
+        foreach ($hvcC["nals"] as $nal) {
             echo "\0\0\0\1".$nal;
         }
         $mdatBit = new IO_Bit();
         $mdatBit->input(substr($this->_isobmffData,
-                               $loc["baseOffset"], $loc["extentLength"]));
-
+                               $loc["offset"], $loc["length"]));
         while ($mdatBit->hasNextData(4)) {
             $len = $mdatBit->getUI32BE();
-            var_dump($len);
             if ($mdatBit->hasNextData($len)) {
                 echo "\0\0\0\1".$mdatBit->getData($len);
             } else {
-                break;
+                // throw new Exception("toHEVC: imcomplete media data");
             }
         }
     }
     function getHEVCBuildInfo($boxList) {
+        $buildInfo = $this->getHEVCBuildInfoBoxList($boxList);
+        $ipco = $buildInfo["ipco"];
+        $hvcCBoxes = [];
+        $auxCBoxes = [];
+        foreach ($buildInfo["ipma"] as $itemID => $propIndices) {
+            foreach ($propIndices as $index) {
+                $box = $ipco[$index];
+                switch ($box["type"]) {
+                case "hvcC":
+                    $hvcCBoxes[$itemID] = $box;
+                    break;
+                case "auxC":
+                    $auxCBoxes[$itemID] = $box;
+                    break;
+                }
+            }
+        }
+        $buildInfo["hvcC"] = $hvcCBoxes;
+        $buildInfo["auxC"] = $auxCBoxes;
+        return $buildInfo;
+    }
+
+    // bi-direct recursive call with getHEVCBuildInfoBox
+    function getHEVCBuildInfoBoxList($boxList) {
         $buildInfo = array();
         foreach ($boxList as $box) {
             $buildInfo += $this->getHEVCBuildInfoBox($box);
         }
         return $buildInfo;
+
     }
     function getHEVCBuildInfoBox($box) {
         $buildInfo = array();
@@ -180,7 +213,6 @@ class IO_HEIF extends IO_ISOBMFF {
                     $propArray[$index] = $prop;
                 }
             }
-            var_dump($propArray);
             $buildInfo += array("ipco" => $propArray);
             break;
         case "ipma":
@@ -192,26 +224,26 @@ class IO_HEIF extends IO_ISOBMFF {
                 }
                 $entryArray[$entry["itemID"]] = $assocArray;
             }
-            var_dump($entryArray);
             $buildInfo += array("ipma" => $entryArray);
             break;
         case "iloc":
             $itemArray = array();
             foreach ($box["itemArray"] as $item) {
+                $baseOffset = $item["baseOffset"];
                 $extentLength = 0;
                 foreach ($item["extentArray"] as $extent) {
                     $extentLength += $extent["extentLength"];
                 }
                 $itemArray[$item["itemID"]] = array(
-                    "baseOffset" => $item["baseOffset"],
-                    "extentLength" => $extentLength,
+                    "offset" => $baseOffset + $extent["extentOffset"],
+                    "length" => $extentLength,
                 );
             }
             $buildInfo += array("iloc" => $itemArray);
             break;
         }
         if (isset($box["boxList"])) {
-            $buildInfo += $this->getHEVCBuildInfo($box["boxList"]);
+            $buildInfo += $this->getHEVCBuildInfoBoxList($box["boxList"]);
         }
         return $buildInfo;
     }

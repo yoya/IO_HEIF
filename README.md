@@ -68,5 +68,7 @@ Items:
 - heiftohevc.php
 
 ```
-% php vendor/yoya/io_heif/sample/heiftohevc.php -f input.heic > output.hevc
+% php vendor/yoya/io_heif/sample/heiftohevc.php -f input.heic -r master xs> output.hevc
+# iPhoneX depth map
+% php sample/heiftohevc.php  -f IMG.HEIC -r aux -u urn:com:apple:photo:2018:aux:portraiteffectsmatte
 ```
