@@ -14,7 +14,7 @@
     "require": {
         "php": ">=5.1.0",
         "yoya/io_bit": "~2.4.0",
-        "yoya/io_isobmff": "~2.3",
+        "yoya/io_isobmff": "~2.4",
 	"yoya/io_hevc": "~1.5",
 	"yoya/io_icc": "~1.1.3"
     },
