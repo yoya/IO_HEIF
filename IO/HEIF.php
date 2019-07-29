@@ -1,7 +1,7 @@
 <?php
 
 /*
-  IO_HEIF class - v2.1
+  IO_HEIF class - v2.2
   (c) 2017/07/26 yoya@awm.jp
   ref) https://mpeg.chiariglione.org/standards/mpeg-h/image-file-format
  */
@@ -78,8 +78,41 @@ class IO_HEIF extends IO_ISOBMFF {
         $this->boxTree = [$ftyp, $mdat, $meta];
     }
     function toHEVC($opts = array()) {
-        $buildInfo = $this->getHEIFBuildInfo($this->boxTree);
-        $itemID = array_keys($buildInfo["ipma"])[0];
+        $buildInfo = $this->getHEVCBuildInfo($this->boxTree);
+        if (isset($opts["ItemID"])) {
+            $itemID = $opts["ItemID"];
+        } else if (isset($opts["RoleType"])) {
+            switch ($opts["RoleType"]) {
+            case "master": // primary ???
+            case "primary":
+            case "pitm":
+                $pitmArr = $this->getBoxesByTypes(["pitm"]);
+                $itemID = $pitmArr[0]["itemID"];
+                break;
+            case "thumbnail":
+            case "thmb":
+                $thmbArr = $this->getBoxesByTypes(["thmb"]);
+                if (count($thmbArr)  > 1) {
+                    ////////////////
+                }
+                $itemID = $thmbArr[0]["itemID"];
+                break;
+            case "auxiliary":
+            case "auxl":
+            case "aux":
+                $auxlArr = $this->getBoxesByTypes(["auxl"]);
+                // urn:mpeg:hevc:2015:auxid:1 : transparent
+                // urn:mpeg:hevc:2015:auxid:2 : depthmap
+                if (! is_null(isset($opts["urn"]))) {
+                    //
+                    exit (0);
+                }
+                $itemId = $auxlArr[0]["itemID"];
+                break;
+            default:
+                ////////////////
+            } 
+        }
         $loc = $buildInfo["iloc"][$itemID];
         foreach ($buildInfo["hvcC"]["nals"] as $nal) {
             echo "\0\0\0\1".$nal;
@@ -90,6 +123,7 @@ class IO_HEIF extends IO_ISOBMFF {
 
         while ($mdatBit->hasNextData(4)) {
             $len = $mdatBit->getUI32BE();
+            var_dump($len);
             if ($mdatBit->hasNextData($len)) {
                 echo "\0\0\0\1".$mdatBit->getData($len);
             } else {
@@ -97,21 +131,68 @@ class IO_HEIF extends IO_ISOBMFF {
             }
         }
     }
-    function getHEIFBuildInfo($boxList) {
+    function getHEVCBuildInfo($boxList) {
         $buildInfo = array();
         foreach ($boxList as $box) {
-            $buildInfo += $this->getHEIFBuildInfoBox($box);
+            $buildInfo += $this->getHEVCBuildInfoBox($box);
         }
         return $buildInfo;
     }
-    function getHEIFBuildInfoBox($box) {
+    function getHEVCBuildInfoBox($box) {
         $buildInfo = array();
         switch ($box["type"]) {
+        case "ipco":
+            $propArray = [];
+            foreach ($box["boxList"] as $index_minus1 => $propBox) {
+                $prop = null;
+                $type = $propBox["type"];
+                switch ($type) {
+                case "hvcC":
+                    $nalArray = array();
+                    foreach ($propBox["nalArrays"] as $nal) {
+                        $nalUnit = "";
+                        foreach ($nal["nalus"] as $nu) {
+                            $nalUnit .= $nu["nalUnit"];
+                        }
+                        $nalArray[$nal["NALUnitType"]] = $nalUnit;
+                    }
+                    $prop = ["type" => $type, "nals" => $nalArray,
+                             "profile" => $propBox["profileIdc"],
+                             "chrome" => $propBox["chromaFormat"]];
+                    break;
+                case "ispe":
+                    $prop = ["type" => $type,
+                             "width"  => $propBox["width"],
+                             "height" => $propBox["height"]];
+                    break;
+                case "auxC":
+                    $prop = ["type" => $type,
+                             "auxType" => $propBox["auxType"],
+                             "auxSubType" => $propBox["auxSubType"]];
+                    break;
+                default:
+                    //$prop = ["type" => $type, "box" => $propBox];
+                    $prop = ["type" => $type];
+                    break;
+                }
+                if (! is_null($prop)) {
+                    $index = $index_minus1 + 1; // index is 1-origin
+                    $propArray[$index] = $prop;
+                }
+            }
+            var_dump($propArray);
+            $buildInfo += array("ipco" => $propArray);
+            break;
         case "ipma":
             $entryArray = array();
             foreach ($box["entryArray"] as $entry) {
-                $entryArray[$entry["itemID"]] = true;
+                $assocArray = array();
+                foreach ($entry["associationArray"] as $assoc) {
+                    $assocArray[] = $assoc["propertyIndex"];
+                }
+                $entryArray[$entry["itemID"]] = $assocArray;
             }
+            var_dump($entryArray);
             $buildInfo += array("ipma" => $entryArray);
             break;
         case "iloc":
@@ -128,22 +209,9 @@ class IO_HEIF extends IO_ISOBMFF {
             }
             $buildInfo += array("iloc" => $itemArray);
             break;
-        case "hvcC":
-            $nalArray = array();
-            foreach ($box["nalArrays"] as $nal) {
-                $nalUnit = "";
-                foreach ($nal["nalus"] as $nu) {
-                    $nalUnit .= $nu["nalUnit"];
-                }
-                $nalArray[$nal["NALUnitType"]] = $nalUnit;
-            }
-            $buildInfo += array("hvcC" => array(
-                "nals" => $nalArray,
-            ));
-            break;
         }
         if (isset($box["boxList"])) {
-            $buildInfo += $this->getHEIFBuildInfo($box["boxList"]);
+            $buildInfo += $this->getHEVCBuildInfo($box["boxList"]);
         }
         return $buildInfo;
     }
