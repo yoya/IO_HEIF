@@ -31,7 +31,7 @@ class IO_HEIF extends IO_ISOBMFF {
                  "componentSubType" => "pict",
                  "componentManufacturer" => "\0\0\0\0",
                  "componentFlags" => 0, "componentFlagsMask" => 0,
-                 "componentName" => "IO_HEIF pict Handler\0" ];
+                 "componentName" => "IO_HEIF pict Handler" ];
         $pitm = ["type" => "pitm",  "version" => 0, "flags" => 0,
                  "itemID" => $itemID];
         $iloc = ["type" => "iloc",  "version" => 0, "flags" => 0,
