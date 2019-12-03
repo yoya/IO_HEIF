@@ -8,7 +8,8 @@ if (is_readable('vendor/autoload.php')) {
 
 $options = getopt("f:i:hvtdR");
 
-if ((isset($options['f']) === false) || (($options['f'] !== "-") && is_readable($options['f']) === false)) {
+if ((isset($options['f']) === false) ||
+    (($options['f'] !== "-") && is_readable($options['f']) === false)) {
     fprintf(STDERR, "Usage: php heifitems.php -f <heif_file> [-htvd]\n");
     fprintf(STDERR, "ex) php heifitems.php -f test.heic -i <itemId> \n");
     fprintf(STDERR, "ex) php heifitems.php -f test.heic -h \n");
@@ -24,7 +25,7 @@ $heifdata = file_get_contents($filename);
 
 $opts = array();
 
-$itemID = isset($options['i'])?intval($options['i']):null;
+$itemID = isset($options['i'])? intval($options['i']): null;
 $opts['hexdump'] = isset($options['h']);
 $opts['typeonly'] = isset($options['t']);
 $opts['verbose'] = isset($options['v']);
