@@ -34,8 +34,16 @@ class IO_HEIF extends IO_ISOBMFF {
                  "componentName" => "IO_HEIF pict Handler" ];
         $pitm = ["type" => "pitm",  "version" => 0, "flags" => 0,
                  "itemID" => $itemID];
+        if (false) { // use base offset only
+            $baseOffsetSize = 4;
+            $offsetSize = 0;
+        } else {    // using extent offset only
+            $baseOffsetSize = 0;
+            $offsetSize = 4;
+        }
         $iloc = ["type" => "iloc",  "version" => 0, "flags" => 0,
-                 "offsetSize" => 0, "lengthSize" => 4, "baseOffsetSize" => 4,
+                 "offsetSize" => $offsetSize, "lengthSize" => 4,
+                 "baseOffsetSize" => $baseOffsetSize,
                  "itemArray" => [
                      ["itemID" => 1, "dataReferenceIndex" => 0,
                       "baseOffset" => 0,
