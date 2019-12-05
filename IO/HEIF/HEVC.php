@@ -22,7 +22,13 @@ class IO_HEIF_HEVC {
         $this->hevc = $hevc;
     }
     function getMDATdata() {
-        $idrData = $this->hevc->getNALRawDataByType(19); // IDR_W_RADL
+        $idrData = $this->hevc->getNALRawDataByType(19);      // IDR_W_RADL
+        if (is_null($idrData)) {
+            $idrData = $this->hevc->getNALRawDataByType(20);  // IDR_N_LP
+        }
+        if (is_null($idrData)) {
+            throw new Exception("getMDATdata: IDR_W_RADL and IDR_N_LP are missing");
+        }
         $idrDataLenData = pack("N", strlen($idrData));
         $mdatData = $idrDataLenData . $idrData;
         /*
