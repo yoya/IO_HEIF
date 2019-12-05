@@ -23,7 +23,7 @@ class IO_HEIF extends IO_ISOBMFF {
         $mdatData = $hevc->getMDATdata();
         $offsetRelative = 8;
         $ftyp = ["type" => "ftyp",
-                 "major" => "mif1", "alt" => ["mif1", "heic"] ];
+                 "major" => "heic", "alt" => ["mif1", "heic"] ];
         $mdat = ["type" => "mdat", "data" => $mdatData,
                  "_mdatId" => $itemID, "_offsetRelative" => $offsetRelative ];
         $hdlr = ["type" => "hdlr", "version" => 0, "flags" => 0,
