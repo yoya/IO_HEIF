@@ -48,7 +48,7 @@ IO_ISOBMFF・IO_HEVC・IO_Bit・IO_ICC は vendor/ (composer install) か includ
 
 - Packagist には io_icc → io_isobmff、io_hevc を出してから io_heif を出す。
 - io_isobmff や io_hevc のメジャーバージョンが上がったら、composer.json の制約がそれを許すように直す。
-  現在の `"yoya/io_isobmff": "~2.6"` は 3.x 以降を選べない。IO_ISOBMFF 2.6 は IO_Bit 2.x を要求し、こちらの `"yoya/io_bit": "~3.0 || ^4.0"` と両立しないので、今の composer.json のままではインストールできない。
-  `"yoya/io_hevc": "~1.5"` も、IO_HEVC が 2.x になったら直す。
+  今は `"yoya/io_isobmff": "~2.6 || ^4.0"`、`"yoya/io_hevc": "~1.5 || ^2.0"`、`"yoya/io_icc": "^1.1.3 || ^2.0"`。
+  IO_ISOBMFF 2.6 は IO_Bit 2.x を要求し、こちらの `"yoya/io_bit": "~3.0 || ^4.0"` と両立しないので、実際に選ばれるのは IO_ISOBMFF 4.x。
 
 公開する文書 (コミットメッセージ、リリースノート、README、Wiki) には、`./tmp/` 由来のファイル名や中身を入れない。
