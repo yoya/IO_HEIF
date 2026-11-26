@@ -23,10 +23,9 @@ MIT License
 - heiffromhevc.php (HEVC to HEIC)
 
 Makes a single-image HEIC from the first IDR picture of an HEVC byte stream (Annex B format).
-On PHP 8.2 or later, IO_HEVC prints Deprecated messages to standard output, which corrupts the output, so add `-d error_reporting='E_ALL & ~E_DEPRECATED'`.
 
 ```
-% php -d error_reporting='E_ALL & ~E_DEPRECATED' vendor/yoya/io_heif/sample/heiffromhevc.php -f input.hevc > output.heic
+% php vendor/yoya/io_heif/sample/heiffromhevc.php -f input.hevc > output.heic
 ```
 
 - heiftree.php (list of properties and items)
@@ -120,7 +119,6 @@ file_put_contents('output.hevc', ob_get_clean());
 - `fromHEVC()` uses only one NAL unit, the first IDR one. Pictures split into several slices, SEI and so on are not included.
 - `toHEVC()` can extract only items that have an hvcC. Derived image items such as grid cannot be extracted (specify the original tile items).
 - `toHEVC()` writes to standard output instead of returning the result.
-- On PHP 8.2 or later, IO_HEVC prints Deprecated messages for dynamic properties. On the CLI they go to standard output, so add `-d error_reporting='E_ALL & ~E_DEPRECATED'` to heiffromhevc.php.
 
 # Test
 

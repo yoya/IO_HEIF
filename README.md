@@ -25,10 +25,9 @@ MIT License
 - heiffromhevc.php (HEVC → HEIC)
 
 HEVC のバイトストリーム (Annex B 形式) の最初の IDR ピクチャから、1 枚の画像の HEIC を作ります。
-PHP 8.2 以降では IO_HEVC が Deprecated のメッセージを標準出力に出して出力が壊れるので、`-d error_reporting='E_ALL & ~E_DEPRECATED'` を付けます。
 
 ```
-% php -d error_reporting='E_ALL & ~E_DEPRECATED' vendor/yoya/io_heif/sample/heiffromhevc.php -f input.hevc > output.heic
+% php vendor/yoya/io_heif/sample/heiffromhevc.php -f input.hevc > output.heic
 ```
 
 - heiftree.php (property と item の一覧)
@@ -122,7 +121,6 @@ file_put_contents('output.hevc', ob_get_clean());
 - `fromHEVC()` は最初の IDR の NAL ユニット 1 つだけを使う。複数のスライスに分かれたピクチャや、SEI などは入らない。
 - `toHEVC()` は hvcC を持つ item だけを取り出せる。grid などの派生画像の item は取り出せない (元のタイルの item を指定する)。
 - `toHEVC()` は結果を返さずに標準出力に書く。
-- PHP 8.2 以降では IO_HEVC が動的プロパティの Deprecated のメッセージを出す。CLI では標準出力に混じるので、heiffromhevc.php では `-d error_reporting='E_ALL & ~E_DEPRECATED'` を付ける。
 
 # Test
 
