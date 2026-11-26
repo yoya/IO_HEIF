@@ -139,5 +139,21 @@ restore_error_handler();
 check('IO_HEIF_HEVC no deprecation', [], $messages);
 check('IO_HEIF_HEVC hevc', 'IO_HEVC', get_class($hevc->hevc));
 
+/*
+ * toHEVC: no item found (auxl with an unknown urn)
+ */
+$data = makeHEIF([1], function($s) {
+    return ilocBox([[1, [[$s, 4]]]]);
+}, "AAAA", hvcCBox($vpsSpsPps));
+$messages = [];
+set_error_handler(function($errno, $errstr) use (&$messages) {
+    $messages []= $errstr;
+    return true;
+});
+$result = toHEVC($data, ['RoleType' => 'auxl', 'urn' => 'urn:none']);
+restore_error_handler();
+check('toHEVC item not found', "Exception: toHEVC: can't found itemID", $result);
+check('toHEVC item not found no warning', [], $messages);
+
 echo "passed: $passed, failed: $failed".PHP_EOL;
 exit($failed ? 1 : 0);

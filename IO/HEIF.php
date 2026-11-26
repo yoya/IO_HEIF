@@ -87,6 +87,7 @@ class IO_HEIF extends IO_ISOBMFF {
     }
     function toHEVC($opts = array()) {
         $buildInfo = $this->getHEVCBuildInfo($this->boxTree);
+        $itemID = null;
         if (isset($opts["ItemID"])) {
             $itemID = $opts["ItemID"];
         } else if (isset($opts["RoleType"])) {
