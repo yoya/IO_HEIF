@@ -118,7 +118,7 @@ file_put_contents('output.hevc', ob_get_clean());
 
 # 既知の制限
 
-- IO_ISOBMFF の制限をそのまま受け継ぐ (IO_ISOBMFF の README の「既知の制限」を参照)。特に、mdat に largesize を使う HEIC (iPhone のものなど) は、作り直し・box の削除・ICC プロファイルの追加で壊れる。
+- IO_ISOBMFF の制限をそのまま受け継ぐ (IO_ISOBMFF の README の「既知の制限」を参照)。
 - `fromHEVC()` は最初の IDR の NAL ユニット 1 つだけを使う。複数のスライスに分かれたピクチャや、SEI などは入らない。
 - `toHEVC()` は hvcC を持つ item だけを取り出せる。grid などの派生画像の item は取り出せない (元のタイルの item を指定する)。
 - `toHEVC()` は結果を返さずに標準出力に書く。

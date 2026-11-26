@@ -116,7 +116,7 @@ file_put_contents('output.hevc', ob_get_clean());
 
 # Known limitations
 
-- The limitations of IO_ISOBMFF apply as they are (see "Known limitations" in the IO_ISOBMFF README). In particular, HEIC files whose mdat uses largesize (such as iPhone files) are corrupted by rebuild, box deletion and ICC profile addition.
+- The limitations of IO_ISOBMFF apply as they are (see "Known limitations" in the IO_ISOBMFF README).
 - `fromHEVC()` uses only one NAL unit, the first IDR one. Pictures split into several slices, SEI and so on are not included.
 - `toHEVC()` can extract only items that have an hvcC. Derived image items such as grid cannot be extracted (specify the original tile items).
 - `toHEVC()` writes to standard output instead of returning the result.
