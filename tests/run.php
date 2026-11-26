@@ -104,5 +104,16 @@ $data = makeHEIF([1, 2], function($s) {
 }, pack('N', 4)."MAIN".pack('N', 4)."THMB", hvcCBox($vpsSpsPps), $iref);
 check('toHEVC thumbnail', $paramSets."\0\0\0\1THMB", toHEVC($data, ['RoleType' => 'thumbnail']));
 
+/*
+ * toHEVC: each NAL unit of an hvcC array gets its own start code
+ */
+$arrays = array_merge($vpsSpsPps, [[39, ["\x4e\x01SEI-A", "\x4e\x01SEI-B"]]]);
+$data = makeHEIF([1], function($s) {
+    return ilocBox([[1, [[$s, 8]]]]);
+}, pack('N', 4)."\x26\x01ID", hvcCBox($arrays));
+check('toHEVC several NAL units in an array',
+      $paramSets."\0\0\0\1\x4e\x01SEI-A"."\0\0\0\1\x4e\x01SEI-B"."\0\0\0\1\x26\x01ID",
+      toHEVC($data, ['ItemID' => 1]));
+
 echo "passed: $passed, failed: $failed".PHP_EOL;
 exit($failed ? 1 : 0);

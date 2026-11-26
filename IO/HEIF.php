@@ -191,11 +191,9 @@ class IO_HEIF extends IO_ISOBMFF {
                 case "hvcC":
                     $nalArray = array();
                     foreach ($propBox["nalArrays"] as $nal) {
-                        $nalUnit = "";
                         foreach ($nal["nalus"] as $nu) {
-                            $nalUnit .= $nu["nalUnit"];
+                            $nalArray[] = $nu["nalUnit"];
                         }
-                        $nalArray[$nal["NALUnitType"]] = $nalUnit;
                     }
                     $prop = ["type" => $type, "nals" => $nalArray,
                              "profile" => $propBox["profileIdc"],
