@@ -103,7 +103,7 @@ class IO_HEIF extends IO_ISOBMFF {
                 if (count($thmbArr) !== 1) {
                     throw new Exception("toHEVC: count(thmbArr) must be 1");
                 }
-                $itemID = $thmbArr[0]["itemID"];
+                $itemID = $thmbArr[0]["fromItemID"];
                 break;
             case "auxiliary":
             case "auxl":
