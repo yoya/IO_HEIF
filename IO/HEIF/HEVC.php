@@ -15,7 +15,7 @@ if (is_readable('vendor/autoload.php')) {
 
 
 class IO_HEIF_HEVC {
-    var $naluList;
+    var $hevc;
     function input($hevcdata) {
         $hevc = new IO_HEVC();
         $hevc->parse($hevcdata);

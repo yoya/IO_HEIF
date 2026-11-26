@@ -123,5 +123,21 @@ $data = makeHEIF([1], function($s) {
 }, pack('N', 6)."\x26\x01IDR!"."TRAILING", hvcCBox($vpsSpsPps));
 check('toHEVC several extents', $paramSets."\0\0\0\1\x26\x01IDR!", toHEVC($data, ['ItemID' => 1]));
 
+/*
+ * IO_HEIF_HEVC::input: no dynamic property deprecation (PHP 8.2+) from IO_HEIF itself
+ */
+$messages = [];
+set_error_handler(function($errno, $errstr) use (&$messages) {
+    if (strpos($errstr, 'IO_HEIF_HEVC') !== false) {
+        $messages []= $errstr;
+    }
+    return true;
+});
+$hevc = new IO_HEIF_HEVC();
+$hevc->input("\0\0\0\1\x4c\x01\xff\x80");  // filler data NAL unit
+restore_error_handler();
+check('IO_HEIF_HEVC no deprecation', [], $messages);
+check('IO_HEIF_HEVC hevc', 'IO_HEVC', get_class($hevc->hevc));
+
 echo "passed: $passed, failed: $failed".PHP_EOL;
 exit($failed ? 1 : 0);
