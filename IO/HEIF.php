@@ -135,9 +135,12 @@ class IO_HEIF extends IO_ISOBMFF {
         foreach ($hvcC["nals"] as $nal) {
             echo "\0\0\0\1".$nal;
         }
+        $data = "";
+        foreach ($loc["extents"] as $extent) {
+            $data .= substr($this->_isobmffData, $extent[0], $extent[1]);
+        }
         $mdatBit = new IO_Bit();
-        $mdatBit->input(substr($this->_isobmffData,
-                               $loc["offset"], $loc["length"]));
+        $mdatBit->input($data);
         while ($mdatBit->hasNextData(4)) {
             $len = $mdatBit->getUI32BE();
             if ($mdatBit->hasNextData($len)) {
@@ -236,14 +239,12 @@ class IO_HEIF extends IO_ISOBMFF {
             $itemArray = array();
             foreach ($box["itemArray"] as $item) {
                 $baseOffset = $item["baseOffset"];
-                $extentLength = 0;
+                $extents = array();
                 foreach ($item["extentArray"] as $extent) {
-                    $extentLength += $extent["extentLength"];
+                    $extents[] = array($baseOffset + $extent["extentOffset"],
+                                       $extent["extentLength"]);
                 }
-                $itemArray[$item["itemID"]] = array(
-                    "offset" => $baseOffset + $extent["extentOffset"],
-                    "length" => $extentLength,
-                );
+                $itemArray[$item["itemID"]] = array("extents" => $extents);
             }
             $buildInfo += array("iloc" => $itemArray);
             break;

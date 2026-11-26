@@ -115,5 +115,13 @@ check('toHEVC several NAL units in an array',
       $paramSets."\0\0\0\1\x4e\x01SEI-A"."\0\0\0\1\x4e\x01SEI-B"."\0\0\0\1\x26\x01ID",
       toHEVC($data, ['ItemID' => 1]));
 
+/*
+ * toHEVC: item stored in several extents
+ */
+$data = makeHEIF([1], function($s) {
+    return ilocBox([[1, [[$s, 5], [$s + 5, 5]]]]);
+}, pack('N', 6)."\x26\x01IDR!"."TRAILING", hvcCBox($vpsSpsPps));
+check('toHEVC several extents', $paramSets."\0\0\0\1\x26\x01IDR!", toHEVC($data, ['ItemID' => 1]));
+
 echo "passed: $passed, failed: $failed".PHP_EOL;
 exit($failed ? 1 : 0);
