@@ -155,5 +155,30 @@ restore_error_handler();
 check('toHEVC item not found', "Exception: toHEVC: can't found itemID", $result);
 check('toHEVC item not found no warning', [], $messages);
 
+/*
+ * sample tools: -r (restrict) is accepted
+ */
+function runSample($script, $args, $data) {
+    global $root;
+    $cmd = escapeshellarg(PHP_BINARY).' -d include_path='.escapeshellarg(get_include_path()).
+         ' '.escapeshellarg("$root/sample/$script").' -f - '.$args;
+    $proc = proc_open($cmd, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $root);
+    fwrite($pipes[0], $data);
+    fclose($pipes[0]);
+    stream_get_contents($pipes[1]);
+    stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    return proc_close($proc);
+}
+// hvcC whose first reserved nibble is 0 instead of 0xF
+$hvcC = box('hvcC', "\x01\x01".pack('N', 0x60000000).str_repeat("\0", 6)."\x5a"."\x00\x00".
+            "\xfc\xfd\xf8\xf8\x00\x00\x0f\x00");
+$data = box('ftyp', 'heic'.pack('N', 0).'mif1heic').fullbox('meta', 0, 0, box('iprp', box('ipco', $hvcC)));
+foreach (['heifdump.php', 'heifitems.php', 'heifprops.php'] as $script) {
+    check("$script without -r", 0, runSample($script, '', $data));
+    check("$script -r", 1, runSample($script, '-r', $data));
+}
+
 echo "passed: $passed, failed: $failed".PHP_EOL;
 exit($failed ? 1 : 0);

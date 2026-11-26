@@ -6,7 +6,7 @@ if (is_readable('vendor/autoload.php')) {
     require_once 'IO/HEIF.php';
 }
 
-$options = getopt("f:i:hvtdR");
+$options = getopt("f:i:hvtdr");
 
 if ((isset($options['f']) === false) ||
     (($options['f'] !== "-") && is_readable($options['f']) === false)) {
