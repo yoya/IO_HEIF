@@ -32,8 +32,8 @@ IO_ISOBMFF・IO_HEVC・IO_Bit・IO_ICC は vendor/ (composer install) か includ
    - 直す必要が無ければ、そう判断したことを報告する。
    - 直したものは、バージョン番号の変更とは別のコミットにする。
 4. バージョン番号の更新
-   - [IO/HEIF.php](IO/HEIF.php) 冒頭の `IO_HEIF class - vX.Y` (今は `v4.0`) を新しい番号にし、それだけのコミットにする。
-   - メッセージは `vX.Y => vA.B` の形にする (前回は `v3.0 => v4.0`)。
+   - [IO/HEIF.php](IO/HEIF.php) 冒頭の `IO_HEIF class - vX.Y` を新しい番号にし、それだけのコミットにする。
+   - メッセージは `vX.Y => vA.B` の形にする (例: `v3.0 => v4.0`)。
 5. タグ
    - 前回と同じ形式 (`3.0` のように v なし、2 桁) でタグを打ち、ブランチと一緒に公開する。
 6. GitHub リリース
