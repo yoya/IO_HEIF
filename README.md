@@ -134,3 +134,9 @@ file_put_contents('output.hevc', ob_get_clean());
 - https://mpeg.chiariglione.org/standards/mpeg-h/image-file-format
 - https://github.com/yoya/IO_ISOBMFF
 - https://github.com/yoya/IO_HEVC
+
+## IO_Bit の利用箇所
+
+box の処理に加え、`toHEVC()` では `IO_Bit::getUI32BE()` で `mdat` 内の NAL ユニットの長さを読み取ります。
+
+[IO_Bit Wiki](https://github.com/yoya/IO_Bit/wiki)
