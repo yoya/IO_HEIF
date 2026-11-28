@@ -653,5 +653,58 @@ $results = json_decode($out, true);
 check('fromHEVC truncated sweep', [0, [], strlen(fromHEVC($tiny)), 'exception'],
       [$status, phpErrors($err), $results[strlen($tiny)], $results[strlen($tiny) - strlen($idr) - 4]]);
 
+/*
+ * sample tools on the test data: exit status 0, no PHP warnings
+ */
+// [exit code, stdout, PHP errors]
+function sampleRun($script, $args) {
+    global $root;
+    list($code, $out, $err) = runPHP(array_merge(["$root/sample/$script"], $args));
+    return [$code, $out, phpErrors($err.$out)];
+}
+foreach (['single.heic', 'multi.heic'] as $name) {
+    $path = "$dataDir/$name";
+    $data = file_get_contents($path);
+    foreach ([['heifdump.php', []], ['heifdump.php', ['-t']], ['heifdump.php', ['-h']], ['heiftree.php', []],
+              ['heifitems.php', []], ['heifitems.php', ['-t']], ['heifprops.php', []], ['heifprops.php', ['-t']],
+              ['heiftohevc.php', []]] as $run) {
+        list($script, $args) = $run;
+        list($code, $out, $errors) = sampleRun($script, array_merge(['-f', $path], $args));
+        check("$script ".implode(' ', $args)." $name", [0, [], true], [$code, $errors, strlen($out) > 0]);
+    }
+    list($code, $out, $errors) = sampleRun('heifrebuild.php', ['-f', $path]);
+    check("heifrebuild.php $name", [0, [], bin2hex($data)], [$code, $errors, bin2hex($out)]);
+    list($code, $out, $errors) = sampleRun('heifdelbox.php', ['-f', $path, '-t', 'ispe']);
+    check("heifdelbox.php $name", [0, [], false, itemData($data)], [$code, $errors, strpos($out, 'ispe'), itemData($out)]);
+    list($code, $out, $errors) = sampleRun('heifaddiccp.php', ['-f', $path, '-p', "$dataDir/tiny.icc"]);
+    $props = firstBox(parseHEIF($out), 'ipco')['boxList'];
+    check("heifaddiccp.php $name", [0, [], 'prof', itemData($data)],
+          [$code, $errors, $props[count($props) - 1]['subtype'], itemData($out)]);
+}
+list($code, $out, $errors) = sampleRun('heiffromhevc.php', ['-f', "$dataDir/tiny.hevc"]);
+check('heiffromhevc.php tiny.hevc', [0, [], bin2hex($tiny)], [$code, $errors, bin2hex(toHEVC($out, ['ItemID' => 1]))]);
+list($code, $out, $errors) = sampleRun('heiftohevc.php', ['-f', "$dataDir/single.heic", '-r', 'master']);
+check('heiftohevc.php -r master', [0, [], bin2hex($tiny)], [$code, $errors, bin2hex($out)]);
+list($code, $out, $errors) = sampleRun('heiftohevc.php', ['-f', "$dataDir/multi.heic"]);
+check('heiftohevc.php list', [0, [], "ItemID:1 infe:grid pitm\nItemID:2 infe:hvc1 dimg:1\nItemID:3 infe:hvc1 dimg:1\n".
+                              "ItemID:4 infe:hvc1 dimg:1\nItemID:5 infe:hvc1 dimg:1\nItemID:6 infe:hvc1 thmb:1\n".
+                              "ItemID:7 infe:hvc1 auxl:1  urn:mpeg:hevc:2015:auxid:1\n".
+                              "ItemID:8 infe:hvc1 auxl:1  urn:mpeg:hevc:2015:auxid:2\nItemID:9 infe:Exif cdsc:1\n"],
+      [$code, $errors, $out]);
+foreach ([[['-r', 'thumbnail'], ['RoleType' => 'thumbnail']], [['-i', '3'], ['ItemID' => 3]],
+          [['-r', 'aux', '-u', 'urn:mpeg:hevc:2015:auxid:1'], ['RoleType' => 'aux', 'urn' => 'urn:mpeg:hevc:2015:auxid:1']]] as $run) {
+    list($code, $out, $errors) = sampleRun('heiftohevc.php', array_merge(['-f', "$dataDir/multi.heic"], $run[0]));
+    check('heiftohevc.php '.implode(' ', $run[0]), [0, [], bin2hex(toHEVC(file_get_contents("$dataDir/multi.heic"), $run[1]))],
+          [$code, $errors, bin2hex($out)]);
+}
+list($code, $out, $errors) = sampleRun('heiftohevc.php', ['-f', "$dataDir/multi.heic", '-r', 'aux']);
+check('heiftohevc.php -r aux without urn', [1, [], 0], [$code, $errors, strpos($out, 'ERROR: heiftohevc: ')]);
+foreach (['heifdump.php', 'heiftree.php', 'heifitems.php', 'heifprops.php', 'heifrebuild.php', 'heiftohevc.php'] as $script) {
+    list($code, $out, $errors) = sampleRun($script, ['-f', "$dataDir/truncated.heic"]);
+    check("$script truncated.heic", [1, [], 0], [$code, $errors, strpos($out, 'ERROR: ')]);
+}
+list($code, $out, $errors) = sampleRun('heiffromhevc.php', ['-f', "$dataDir/truncated.heic"]);
+check('heiffromhevc.php not HEVC', [1, [], 0], [$code, $errors, strpos($out, 'ERROR: ')]);
+
 echo "passed: $passed, failed: $failed".PHP_EOL;
 exit($failed ? 1 : 0);
